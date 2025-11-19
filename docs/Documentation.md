@@ -592,8 +592,7 @@ Fonte: Elaborado pelo autor (2025).
 
 Fonte: Elaborado pelo autor (2025).
 
-PROTÓTIPO E PLANEJAMENTO DA ARQUITETURA
-=======================================
+# PROTÓTIPO E PLANEJAMENTO DA ARQUITETURA
 
 A etapa de prototipagem e planejamento arquitetural do ***All Service Gestão Fiscal*** tem como finalidade definir a estrutura de navegação do sistema, a organização dos módulos funcionais e a disposição dos fluxos de dados entre as camadas. Essa fase antecede o desenvolvimento final e permite validar a usabilidade, a coerência do fluxo operacional (OS→NF→Fatura) e a integração entre as áreas Fiscal, Financeira e Operacional.
 
@@ -628,7 +627,7 @@ O armazenamento e acesso aos dados ocorrem em **camadas independentes**, visando
 
 Fonte: Elaborado pelo autor (2025).
 
-**PREPARAÇÃO DO DESENVOLVIMENTO**
+# PREPARAÇÃO DO DESENVOLVIMENTO
 
 **TABELA – PLANO DE EXECUÇÃO**
 
@@ -671,7 +670,27 @@ As visualizações foram desenvolvidas na interface **Angular**, consumindo dado
 
 Fonte: Elaborado pelo autor (2025).
 
-REFERÊNCIAS
+# PETI (Plano Estratégico de Tecnologia da Informação)
+
+O Plano Estratégico de Tecnologia da Informação (PETI) estabelece as diretrizes para a continuidade e evolução do _All Service Gestão Fiscal_, mantendo o alinhamento entre a solução desenvolvida e a estratégia organizacional. Sua finalidade central é garantir que a tecnologia permaneça como instrumento de apoio à gestão fiscal, financeira e operacional da empresa, reforçando a organização dos processos, a rastreabilidade, a redução de erros e a geração de conhecimento útil para a tomada de decisão.
+
+Durante o desenvolvimento do sistema, foi possível identificar pontos fortes importantes, como a integração completa do fluxo OS–NF–Fatura, a implementação de uma máquina de estados rastreável, a emissão automática de certificados técnicos, a aplicação de regras fiscais explicáveis e a disponibilidade de indicadores operacionais e financeiros diretamente no sistema. Observou-se também algumas limitações, como a ausência de integração com todos os municípios para emissão de NFS-e, a permanência de determinados campos que exigem entrada manual, a necessidade de aprimorar o módulo de permissões e o fortalecimento das rotinas formais de segurança, backup e governança.
+
+As diretrizes estratégicas do PETI orientam que as próximas evoluções da solução priorizem a automação fiscal ampliada, incluindo novas integrações municipais e aprimoramento de regras de retenção; a expansão do módulo financeiro com funcionalidades de cobrança e projeção de inadimplência; o reforço das políticas de segurança, acessos e conformidade; a melhoria progressiva da experiência do usuário; e o avanço na camada analítica com relatórios mais inteligentes e projeções automáticas. Tais diretrizes asseguram que o sistema acompanhe a maturidade organizacional da empresa e amplie cada vez mais seu potencial de suporte à gestão.
+
+Os objetivos estratégicos de curto prazo (0 a 6 meses) concentram-se na consolidação dos módulos principais, na criação de uma política formal de backup e no desenvolvimento de materiais de orientação ao usuário. No médio prazo (6 a 12 meses), a empresa deve buscar ampliar integrações fiscais, evoluir o módulo financeiro e estruturar melhores mecanismos de auditoria e controle. No longo prazo (1 a 2 anos), o foco passa a ser o uso avançado de análise de dados, integração bancária completa, maior automação de processos e a possibilidade de abertura de APIs para outros parceiros de negócio. Para acompanhar tais objetivos, recomenda-se monitorar indicadores como a quantidade de usuários ativos, a frequência de uso, a redução de erros e retrabalho, o tempo de resposta das análises fiscais e financeiras, a acurácia de classificações e o comportamento do aging.
+
+
+# Auditoria e Governança de TI (para Pequenas Empresas)
+
+A governança e auditoria de TI aplicadas à realidade da empresa devem adotar uma abordagem simples, prática e totalmente adequada ao porte da organização. Os mecanismos de controle devem ser suficientes para assegurar segurança, continuidade e uso adequado da tecnologia, sem criar estruturas pesadas ou processos burocráticos. Nesse sentido, a proteção e o tratamento de dados pessoais devem seguir princípios essenciais da LGPD, garantindo que informações de clientes, fornecedores e colaboradores sejam armazenadas e utilizadas de forma segura. O acesso ao sistema deve ser individualizado, com perfis ajustados ao nível de responsabilidade de cada usuário.
+
+Quanto às práticas recomendadas, é importante que a empresa mantenha rotinas periódicas de troca de senhas, utilize ferramentas seguras, mantenha uma periodicidade consistente de backup e documente alterações relevantes no sistema. Em caso de falha ou perda de dados, deve existir um procedimento simples que contemple a restauração do backup mais recente, o registro do incidente, a verificação da integridade das informações recuperadas e a comunicação às áreas envolvidas para avaliação de possíveis impactos.
+
+As responsabilidades relacionadas ao sistema devem ser claramente definidas. Um responsável técnico deve ser designado para manter e evoluir a aplicação, enquanto um responsável administrativo deve controlar cadastros de usuários e acessos. É recomendada a existência de pelo menos duas pessoas com permissão administrativa para evitar dependência de um único colaborador. Para garantir o bom uso e a continuidade operacional, a empresa deve adotar uma governança simplificada, estabelecendo regras claras de utilização, mantendo um manual ou guia prático para novos usuários e avaliando, em intervalos regulares, se o sistema continua atendendo às necessidades estratégicas da organização.
+
+
+# REFERÊNCIAS
 
 PORTER, Michael E. **Competição: estratégias competitivas essenciais**. 15. reimp. Rio de Janeiro: Campus, 2009.
 
