@@ -1,0 +1,214 @@
+<section class="dashboard-page as-page-stack">
+  @if (mostrarPainelFiltros()) {
+    <section class="dashboard-filtros">
+      <header class="filters-header">
+        <div>
+          <h3>Filtros avançados</h3>
+          <p>Refine a visão por status operacional, segmento atendido, forma de pagamento ou período.</p>
+        </div>
+        <div class="filters-actions">
+          @if (temFiltrosAtivos()) {
+            <as-botao variante="fantasma" iconeEsquerda="fas fa-eraser" (click)="limparFiltros()">
+              Limpar filtros
+            </as-botao>
+          }
+          <as-botao variante="secundario" iconeEsquerda="fas fa-xmark" (click)="togglePainelFiltros()">
+            Fechar painel
+          </as-botao>
+        </div>
+      </header>
+
+      <div class="filters-grid">
+        <div class="filter-group">
+          <span class="filter-group__title">Status operacional</span>
+          <div class="filter-chips">
+            @for (status of statusOpcoes(); track status) {
+              <button
+                type="button"
+                class="filter-chip"
+                [class.is-active]="statusSelecionados().has(status)"
+                (click)="toggleStatus(status)"
+              >
+                <span>{{ status }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-group__title">Segmentos atendidos</span>
+          <div class="filter-chips">
+            @for (segmento of segmentoOpcoes(); track segmento) {
+              <button
+                type="button"
+                class="filter-chip"
+                [class.is-active]="segmentosSelecionados().has(segmento)"
+                (click)="toggleSegmento(segmento)"
+              >
+                <span>{{ segmento }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-group__title">Formas de pagamento</span>
+          <div class="filter-chips">
+            @for (pagamento of pagamentoOpcoes(); track pagamento) {
+              <button
+                type="button"
+                class="filter-chip"
+                [class.is-active]="pagamentosSelecionados().has(pagamento)"
+                (click)="togglePagamento(pagamento)"
+              >
+                <span>{{ pagamento }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <span class="filter-group__title">Período</span>
+          <div class="filter-period">
+            <label>
+              <span>Início</span>
+              <input type="date" [value]="dataInicio()" (change)="setDataInicio($any($event.target).value)" />
+            </label>
+            <label>
+              <span>Fim</span>
+              <input type="date" [value]="dataFim()" (change)="setDataFim($any($event.target).value)" />
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <section class="metrics-grid as-kpi-grid">
+    @for (card of indicadores(); track card.titulo) {
+      <as-cartao-indicador
+        [titulo]="card.titulo"
+        [valor]="card.valor"
+        [descricao]="card.descricao"
+        [icone]="card.icone"
+        [tendencia]="card.tendencia"
+        [tipo]="card.tipo"
+      />
+    }
+  </section>
+
+  <section class="analise-visual">
+    <div class="charts-grid charts-grid--wide">
+      <as-cartao-grafico
+        titulo="Evolução de faturamento"
+        descricao="Valor bruto e líquido por mês"
+        icone="fas fa-chart-area"
+        tipo="area"
+        [series]="graficoFaturamento().series"
+        [eixoX]="{ categories: graficoFaturamento().categorias }"
+        [cores]="graficoFaturamento().cores"
+        [dica]="graficoFaturamento().tooltip"
+        [legenda]="graficoFaturamento().legenda"
+      ></as-cartao-grafico>
+
+      <as-cartao-grafico
+        titulo="Receita por segmento"
+        descricao="Comparativo bruto x líquido"
+        icone="fas fa-layer-group"
+        tipo="bar"
+        [series]="graficoSegmentos().series"
+        [eixoX]="{ categories: graficoSegmentos().categorias }"
+        [cores]="graficoSegmentos().cores"
+      ></as-cartao-grafico>
+    </div>
+
+    <div class="charts-grid">
+      <as-cartao-grafico
+        titulo="Distribuição de serviços"
+        descricao="Participação por tipo de contrato"
+        icone="fas fa-chart-pie"
+        tipo="donut"
+        [series]="graficoDistribuicao().series"
+        [rotulos]="graficoDistribuicao().rotulos"
+        [cores]="graficoDistribuicao().cores"
+      >
+        <div chart-extra class="chart-extra">
+          <i class="fas fa-circle-info"></i>
+          <span>Participação consolidada dos últimos 12 meses.</span>
+        </div>
+      </as-cartao-grafico>
+
+      <as-cartao-grafico
+        titulo="Mix de pagamentos"
+        descricao="Formas preferidas pelos clientes"
+        icone="fas fa-coins"
+        tipo="donut"
+        [series]="graficoPagamentos().series"
+        [rotulos]="graficoPagamentos().rotulos"
+        [cores]="graficoPagamentos().cores"
+      ></as-cartao-grafico>
+
+      <as-cartao-grafico
+        titulo="Pipeline operacional"
+        descricao="Serviços por etapa"
+        icone="fas fa-diagram-project"
+        tipo="bar"
+        [series]="graficoPipeline().series"
+        [eixoX]="{ categories: graficoPipeline().categorias }"
+        [cores]="graficoPipeline().cores"
+      ></as-cartao-grafico>
+    </div>
+  </section>
+
+  <section class="insights-grid">
+    <article class="insight-card">
+      <header>
+        <div>
+          <h3>Top clientes</h3>
+          <p>Representatividade no faturamento líquido do período.</p>
+        </div>
+        <span class="insight-tag">{{ topClientes().length }} contas</span>
+      </header>
+      <ul class="insight-list">
+        @for (cliente of topClientes(); track cliente.empresa) {
+          <li>
+            <div class="insight-list__meta">
+              <span class="insight-list__title">{{ cliente.empresa }}</span>
+              <span class="insight-list__subtitle">Bruto · {{ formatarMoeda(cliente.valorBruto) }}</span>
+            </div>
+            <div class="insight-list__values">
+              <span>{{ formatarMoeda(cliente.valorLiquido) }}</span>
+              <span class="insight-list__chip">{{ percentualParticipacao(cliente.participacaoPct) }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    </article>
+
+    <article class="insight-card">
+      <header>
+        <div>
+          <h3>Produtividade da equipe</h3>
+          <p>Volume liquidado, horas aplicadas e NPS médio.</p>
+        </div>
+        <span class="insight-tag">{{ produtividadeEquipe().length }} squads</span>
+      </header>
+      <ul class="insight-list">
+        @for (squad of produtividadeEquipe(); track squad.responsavel) {
+          <li>
+            <div class="insight-list__meta">
+              <span class="insight-list__title">{{ squad.responsavel }}</span>
+              <span class="insight-list__subtitle">Lead time médio {{ formatarNumero(squad.leadTimeMedioDias) }} dias</span>
+            </div>
+            <div class="insight-list__values">
+              <span>{{ formatarMoeda(squad.valorLiquido) }}</span>
+              <span class="insight-list__chip">
+                {{ formatarNumero(squad.quantidadeServicos) }} serviços
+              </span>
+            </div>
+          </li>
+        }
+      </ul>
+    </article>
+  </section>
+</section>

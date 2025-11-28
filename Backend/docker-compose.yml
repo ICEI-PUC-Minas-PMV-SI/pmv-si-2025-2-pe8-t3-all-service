@@ -1,0 +1,36 @@
+services:
+  # db:
+  #   image: postgres:15
+  #   container_name: postgres
+  #   environment:
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - allservice-net
+
+
+  app:
+    build: .
+    container_name: app
+    # depends_on:
+    #   - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-allservice.postgres.database.azure.com:5432/allservice?sslmode=require
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+    ports:
+      - "8080:8080"
+    networks:
+      - allservice-net
+
+# networks:
+#   allservice-net:
+#     driver: bridge
+
+# volumes:
+#   postgres_data:

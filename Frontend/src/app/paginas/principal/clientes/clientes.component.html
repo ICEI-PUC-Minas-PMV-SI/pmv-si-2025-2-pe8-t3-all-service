@@ -1,0 +1,206 @@
+<as-central-notificacoes />
+
+<section class="clientes-shell">
+	@if (mostrarFiltros()) {
+		<section class="clientes-filtros as-outline-surface">
+			<header class="clientes-filtros__header">
+				<div>
+					<h2>Filtros avançados</h2>
+					<p>Combine múltiplos critérios para refinar a carteira.</p>
+				</div>
+				<button type="button" class="clientes-filtros__clear as-filter-reset" (click)="limparFiltrosAvancados()" [disabled]="!haFiltrosAplicados()">
+					<i class="fas fa-eraser"></i>
+					Limpar filtros
+					@if (totalFiltrosAplicados() > 0) {
+						<span class="badge">{{ totalFiltrosAplicados() }}</span>
+					}
+				</button>
+			</header>
+
+			<div class="clientes-filtros__grid">
+				<fieldset>
+					<legend>Status</legend>
+					<div class="clientes-chips">
+						@for (status of statusDisponiveis; track status) {
+							<button type="button"
+											class="clientes-chip"
+											[class.clientes-chip--active]="filtrosStatus().has(status)"
+											(click)="toggleStatusFiltro(status)">
+								{{ status }}
+							</button>
+						}
+					</div>
+				</fieldset>
+
+				<fieldset>
+					<legend>Categoria</legend>
+					<div class="clientes-chips">
+						@for (categoria of categoriasDisponiveis(); track categoria) {
+							<button type="button"
+											class="clientes-chip"
+											[class.clientes-chip--active]="filtrosCategoria().has(categoria)"
+											(click)="toggleCategoriaFiltro(categoria)">
+								{{ categoria }}
+							</button>
+						}
+					</div>
+				</fieldset>
+
+				<fieldset>
+					<legend>UF</legend>
+					<div class="clientes-chips clientes-chips--wrap">
+						@for (uf of ufsDisponiveis(); track uf) {
+							<button type="button"
+											class="clientes-chip"
+											[class.clientes-chip--active]="filtrosUf().has(uf)"
+											(click)="toggleUfFiltro(uf)">
+								{{ uf }}
+							</button>
+						}
+					</div>
+				</fieldset>
+			</div>
+		</section>
+	}
+
+	@if (metrics().length) {
+		<div class="clientes-metricas as-kpi-grid">
+			@for (m of metrics(); track m.id) {
+				<as-cartao-indicador 
+					[titulo]="m.label" 
+					[valor]="m.value"
+					[descricao]="m.description || ''"
+					[icone]="obterIconeMetrica(m.id)"
+					[tendencia]="m.trend"
+					[accent]="obterCorMetrica(m.id)"
+					[tipo]="obterTomMetrica(m.id)"
+				/>
+			}
+		</div>
+	}
+
+	@if (carregando()) {
+		<div class="clientes-loading" role="status">Carregando empresas...</div>
+	}
+
+	@if (!carregando() && erro()) {
+		<div class="clientes-erro" role="alert">{{ erro() }}</div>
+	}
+
+	<!-- Multi-select toolbar -->
+	@if (selecionados().size > 0) {
+		<as-barra-selecao
+			[quantidade]="selecionados().size"
+			(marcar)="marcarSelecionadosComoAtivos()"
+			(exportar)="exportarSelecionados()"
+			(excluir)="excluirSelecionados()"
+			(cancelar)="limparSelecao()" />
+	}
+
+	<section class="as-data-table-card">
+		<div class="as-data-table-card__body">
+			<div class="as-data-table-card__toolbar">
+				<div class="as-data-table-card__legend">
+					<h3>Empresas cadastradas</h3>
+					<p>Visualize a carteira e exporte os dados conforme necessário.</p>
+				</div>
+				<div class="as-data-table-card__actions">
+					<as-seletor-colunas [colunas]="colunas()" (alterou)="alternarColuna($event)" />
+					<as-menu-exportacao (selecionou)="exportar($event)" />
+				</div>
+			</div>
+
+			<div class="as-data-table-wrapper">
+				<table class="as-data-table">
+					<thead>
+						<tr>
+							<th class="w-12">
+								<input 
+									type="checkbox" 
+									[checked]="todosSelecionadosPagina()" 
+									[indeterminate]="indeterminadoPagina()" 
+									(change)="toggleSelecionarTodosPagina($event)" 
+									aria-label="Selecionar página" 
+								/>
+							</th>
+							@for (coluna of colunasVisiveis(); track coluna.id) {
+								<th [asOrdenavel]="coluna.id" (click)="clicarOrdenacao(coluna.id, $event)">
+									<span>{{ coluna.label }}</span>
+									<i class="fas"
+										 [class.fa-sort-up]="ordenacao().coluna === coluna.id && ordenacao().direcao === 'asc'"
+										 [class.fa-sort-down]="ordenacao().coluna === coluna.id && ordenacao().direcao === 'desc'"
+										 [class.fa-sort]="ordenacao().coluna !== coluna.id || ordenacao().direcao === 'none'"
+										 [class.text-muted]="ordenacao().coluna !== coluna.id || ordenacao().direcao === 'none'"></i>
+								</th>
+							}
+							<th class="col-acoes">Ações</th>
+						</tr>
+					</thead>
+					<tbody>
+						@for (cli of paginaOrdenada(); track cli.id) {
+							<tr
+								class="as-data-table__row"
+								[class.is-selected]="selecionados().has(cli.id)"
+								tabindex="0"
+								role="button"
+								(click)="toggleSelecionado(cli.id)"
+							>
+								<td (click)="$event.stopPropagation()">
+									<input 
+										type="checkbox" 
+										[checked]="selecionados().has(cli.id)" 
+										(change)="toggleSelecionado(cli.id)" 
+										[attr.aria-label]="'Selecionar empresa ' + cli.razaoSocial" 
+									/>
+								</td>
+								@for (coluna of colunasVisiveis(); track coluna.id) {
+									<td>
+										@switch (coluna.id) {
+											@case ('id') { {{ cli.id }} }
+											@case ('razaoSocial') { {{ cli.razaoSocial }} }
+											@case ('cnpj') { {{ cli.cnpj }} }
+											@case ('endereco') { 
+												<span style="max-width: 300px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="cli.endereco">
+													{{ cli.endereco }}
+												</span>
+											}
+											@case ('ativo') {
+												<as-status-badge [status]="cli.ativo ? 'ativo' : 'inativo'" />
+											}
+										}
+									</td>
+								}
+								<td class="col-acoes" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+									<as-menu-acoes-linha [acoes]="acoes" (acionar)="acao($event, cli)" />
+								</td>
+							</tr>
+						}
+						@if (paginaOrdenada().length === 0) {
+							<tr>
+								<td class="as-data-table__empty" [attr.colspan]="colunasVisiveis().length + 2">
+									<as-estado-vazio titulo="Sem empresas" descricao="Cadastre novas empresas ou ajuste os filtros." />
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<footer class="as-data-table-card__footer">
+			<div>
+				{{ formatarNumero(paginaOrdenada().length ? inicio() + 1 : 0) }}–{{ formatarNumero(fim()) }} de {{ formatarNumero(filtradas().length) }} empresas
+			</div>
+			<as-paginacao [pagina]="pagina()" [tamanhoPagina]="tamanhoPagina()" [total]="filtradas().length" (mudouPagina)="mudarPagina($event)" />
+		</footer>
+	</section>
+</section>
+
+<app-cliente-detalhe
+	[aberto]="detalheAberto()"
+	[clienteId]="detalheClienteId()"
+	[modoInicial]="detalheModo()"
+	(fechar)="fecharDetalhe()"
+	(salvo)="clienteSalvo()"
+	(excluido)="clienteExcluido()"
+/>

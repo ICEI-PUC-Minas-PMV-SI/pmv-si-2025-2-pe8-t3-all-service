@@ -1,0 +1,228 @@
+<div class="conta-page as-page-stack">
+  <!-- Profile Section -->
+  <section class="conta-card">
+    <header class="conta-card__header">
+      <div>
+        <h2 class="conta-card__title">
+          <i class="fas fa-user-circle"></i>
+          Perfil
+        </h2>
+        <p class="conta-card__subtitle">Gerencie suas informações pessoais</p>
+      </div>
+      @if (!editando()) {
+        <button type="button" class="btn btn--secondary" (click)="iniciarEdicao()">
+          <i class="fas fa-pen"></i>
+          Editar
+        </button>
+      }
+    </header>
+
+    <div class="conta-card__body">
+      <div class="perfil-layout">
+        <!-- Avatar Section -->
+        <div class="perfil-avatar">
+          <div class="avatar-wrapper">
+            @if (perfil().avatar) {
+              <img [src]="perfil().avatar" alt="Avatar" class="avatar-image" />
+            } @else {
+              <div class="avatar-placeholder">
+                <i class="fas fa-user"></i>
+              </div>
+            }
+          </div>
+          @if (editando()) {
+            <div class="avatar-actions">
+              <label class="btn btn--sm btn--primary">
+                <i class="fas fa-upload"></i>
+                Enviar foto
+                <input type="file" accept="image/*" (change)="uploadAvatar($event)" hidden />
+              </label>
+              @if (perfil().avatar) {
+                <button type="button" class="btn btn--sm btn--ghost" (click)="removerAvatar()">
+                  <i class="fas fa-trash"></i>
+                  Remover
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Profile Fields -->
+        <div class="perfil-campos">
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-label">Nome completo</label>
+              @if (editando()) {
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  [(ngModel)]="perfil().nome"
+                  placeholder="Digite seu nome"
+                />
+              } @else {
+                <p class="form-value">{{ perfil().nome }}</p>
+              }
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">E-mail</label>
+              @if (editando()) {
+                <input 
+                  type="email" 
+                  class="form-input" 
+                  [(ngModel)]="perfil().email"
+                  placeholder="seu@email.com"
+                />
+              } @else {
+                <p class="form-value">{{ perfil().email }}</p>
+              }
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">Cargo</label>
+              @if (editando()) {
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  [(ngModel)]="perfil().cargo"
+                  placeholder="Seu cargo"
+                />
+              } @else {
+                <p class="form-value">{{ perfil().cargo }}</p>
+              }
+            </div>
+
+            <div class="form-field">
+              <label class="form-label">Departamento</label>
+              @if (editando()) {
+                <select class="form-input" [(ngModel)]="perfil().departamento">
+                  <option value="Operacional">Operacional</option>
+                  <option value="Comercial">Comercial</option>
+                  <option value="Financeiro">Financeiro</option>
+                  <option value="Administrativo">Administrativo</option>
+                </select>
+              } @else {
+                <p class="form-value">{{ perfil().departamento }}</p>
+              }
+            </div>
+          </div>
+
+          @if (editando()) {
+            <div class="form-actions">
+              <button type="button" class="btn btn--secondary" (click)="cancelarEdicao()" [disabled]="salvando()">
+                <i class="fas fa-times"></i>
+                Cancelar
+              </button>
+              <button type="button" class="btn btn--primary" (click)="salvarPerfil()" [disabled]="salvando()">
+                <i class="fas fa-check"></i>
+                {{ salvando() ? 'Salvando...' : 'Salvar alterações' }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Section -->
+  <section class="conta-card">
+    <header class="conta-card__header">
+      <div>
+        <h2 class="conta-card__title">
+          <i class="fas fa-shield-halved"></i>
+          Segurança
+        </h2>
+        <p class="conta-card__subtitle">Altere sua senha e configure a autenticação</p>
+      </div>
+      @if (!mostrarSenha()) {
+        <button type="button" class="btn btn--secondary" (click)="mostrarSenha.set(true)">
+          <i class="fas fa-key"></i>
+          Alterar senha
+        </button>
+      }
+    </header>
+
+    @if (mostrarSenha()) {
+      <div class="conta-card__body">
+        <form class="senha-form">
+          <div class="form-field">
+            <label class="form-label">Senha atual</label>
+            <input 
+              type="password" 
+              class="form-input" 
+              [(ngModel)]="senhaAtual"
+              name="senhaAtual"
+              placeholder="Digite sua senha atual"
+              required
+            />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Nova senha</label>
+            <input 
+              type="password" 
+              class="form-input" 
+              [(ngModel)]="novaSenha"
+              name="novaSenha"
+              placeholder="Digite a nova senha"
+              required
+            />
+            <p class="form-hint">Mínimo de 8 caracteres</p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">Confirmar nova senha</label>
+            <input 
+              type="password" 
+              class="form-input" 
+              [(ngModel)]="confirmarSenha"
+              name="confirmarSenha"
+              placeholder="Confirme a nova senha"
+              required
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn--secondary" (click)="mostrarSenha.set(false)">
+              <i class="fas fa-times"></i>
+              Cancelar
+            </button>
+            <button type="button" class="btn btn--primary" (click)="alterarSenha()">
+              <i class="fas fa-check"></i>
+              Confirmar alteração
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+  </section>
+
+  <!-- Session Info -->
+  <section class="conta-card conta-card--info">
+    <div class="conta-card__body">
+      <div class="sessao-info">
+        <div class="sessao-item">
+          <i class="fas fa-calendar"></i>
+          <div>
+            <span class="sessao-label">Último acesso</span>
+            <span class="sessao-valor">Hoje às 14:32</span>
+          </div>
+        </div>
+        <div class="sessao-item">
+          <i class="fas fa-desktop"></i>
+          <div>
+            <span class="sessao-label">Dispositivo</span>
+            <span class="sessao-valor">Windows 11 - Chrome</span>
+          </div>
+        </div>
+        <div class="sessao-item">
+          <i class="fas fa-map-marker-alt"></i>
+          <div>
+            <span class="sessao-label">Localização</span>
+            <span class="sessao-valor">São Paulo, Brasil</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

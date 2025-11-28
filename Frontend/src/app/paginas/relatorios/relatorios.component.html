@@ -1,0 +1,431 @@
+<router-outlet />
+
+    @if (mostrarFiltros()) {
+      <form class="grid gap-4 p-5 md:grid-cols-4" (submit)="$event.preventDefault()">
+        <label class="flex flex-col gap-1">
+          <span class="texto-label">Busca contextual</span>
+          <input type="text" class="campo" placeholder="Empresa, NF, cliente..." (input)="atualizarTermo($event)" [value]="filtro().termo" />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="texto-label">Data inicial</span>
+          <input type="date" class="campo" (change)="atualizarData('dataInicio', $event)" [value]="filtro().dataInicio" />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="texto-label">Data final</span>
+          <input type="date" class="campo" (change)="atualizarData('dataFim', $event)" [value]="filtro().dataFim" />
+        </label>
+
+        <div class="flex flex-col gap-2">
+          <span class="texto-label">Status</span>
+          <div class="flex flex-wrap gap-2">
+            @for (s of statusDisponiveis; track s) {
+              <button type="button" class="filtro-chip" [class.selecionado]="filtro().status.has(s)" (click)="toggleStatus(s)">
+                <i class="fas fa-sparkles"></i> {{ formatarEnum(s) }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <span class="texto-label">Pagamento</span>
+          <div class="flex flex-wrap gap-2">
+            @for (p of pagamentosDisponiveis; track p) {
+              <button type="button" class="filtro-chip" [class.selecionado]="filtro().pagamentos.has(p)" (click)="togglePagamento(p)">
+                <i class="fas fa-money-check-alt"></i> {{ formatarEnum(p) }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <span class="texto-label">Tipo de imposto</span>
+          <div class="flex flex-wrap gap-2">
+            @for (i of impostosDisponiveis; track i) {
+              <button type="button" class="filtro-chip" [class.selecionado]="filtro().impostos.has(i)" (click)="toggleImposto(i)">
+                <i class="fas fa-scale-balanced"></i> {{ formatarEnum(i) }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <span class="texto-label">Empresas contratantes</span>
+          <div class="grid gap-1 sm:grid-cols-2">
+            @for (empresa of empresasDisponiveis(); track empresa.id) {
+              <label class="empresa-opcao">
+                <input type="checkbox" (change)="toggleEmpresa(empresa.id)" [checked]="filtro().empresas.has(empresa.id)" />
+                <div>
+                  <p class="font-medium">{{ empresa.nome }}</p>
+                  <span class="text-[11px] text-green-600">{{ empresa.cnpj }}</span>
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+
+        <div class="md:col-span-4 flex flex-wrap justify-between gap-3 items-center">
+          <div class="text-xs text-green-700">
+            {{ filtrados().length }} de {{ todos().length }} serviços visíveis • {{ participacaoFiltrada() }}
+          </div>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              class="as-filter-reset"
+              (click)="limparFiltros()"
+              [disabled]="!temFiltroAtivo()">
+              <i class="fas fa-eraser"></i>
+              Limpar filtros
+            </button>
+            <as-botao variante="secundario" iconeEsquerda="fas fa-eye" (click)="mostrarFiltros.set(false)">
+              Recolher painel
+            </as-botao>
+          </div>
+        </div>
+      </form>
+    }
+  </div>
+
+  <div class="relatorios-metricas as-kpi-grid">
+  <as-cartao-indicador
+    titulo="Serviços analisados"
+    [valor]="filtrados().length"
+    [descricao]="participacaoFiltrada()"
+    icone="fas fa-layer-group"
+    tendencia="flat"
+    [accent]="'#2563eb'"
+  />
+  <as-cartao-indicador
+    titulo="Valor bruto"
+    [valor]="formatarValor(totais().valorTotal)"
+    descricao="Montante faturado"
+    icone="fas fa-coins"
+    tendencia="up"
+    [accent]="'#16a34a'"
+    [tipo]="'sucesso'"
+  />
+  <as-cartao-indicador
+    titulo="Valor líquido"
+    [valor]="formatarValor(totais().valorLiquido)"
+    [descricao]="'Ticket médio ' + formatarValor(ticketMedio())"
+    icone="fas fa-chart-line"
+    tendencia="flat"
+    [accent]="'#0ea5e9'"
+    [tipo]="'sucesso'"
+  />
+  <as-cartao-indicador
+    titulo="Carga tributária"
+    [valor]="totais().valorImposto > 0 ? formatarValor(totais().valorImposto) : 'R$ 0,00'"
+    [descricao]="cargaTributaria().toFixed(1) + '% do bruto'"
+    icone="fas fa-scale-balanced"
+    tendencia="down"
+    [accent]="'#dc2626'"
+    [tipo]="'erro'"
+  />
+  </div>
+
+  <div class="grid gap-4 xl:grid-cols-[2fr_1fr] items-start">
+    <div class="grid gap-4 md:grid-cols-2">
+      <as-cartao-grafico
+        titulo="Evolução mensal"
+        descricao="Comparativo de valor bruto e líquido consolidado"
+        icone="fas fa-chart-area"
+        tipo="area"
+        [series]="[
+          { name: 'Valor bruto', data: tendenciaTemporal().bruto },
+          { name: 'Valor líquido', data: tendenciaTemporal().liquido }
+        ]"
+        [eixoX]="{ categories: tendenciaTemporal().categorias }"
+        [cores]="['#0f766e', '#10b981']"
+        [rotulosDados]="{ enabled: false }"
+        [tracado]="{ curve: 'smooth', width: 2 }"
+        (pontoSelecionado)="filtrarPorMes($event)"
+      >
+        <div chart-extra class="chart-extra">
+          @if (mesSelecionado()) {
+            <span class="marcador-interacao">
+              <i class="fas fa-filter"></i>
+              {{ formatarMes(mesSelecionado()) }}
+            </span>
+          } @else {
+            <span class="marcador-interacao neutro">Selecione um mês</span>
+          }
+          <button type="button" class="link-reset" (click)="limparInteracoesGraficas()" [disabled]="!mesSelecionado() && !impostoSelecionado()">
+            Limpar
+          </button>
+        </div>
+      </as-cartao-grafico>
+
+      <as-cartao-grafico
+        titulo="Composição tributária"
+        descricao="Impacto do imposto no valor líquido"
+        icone="fas fa-circle-notch"
+        tipo="donut"
+        [series]="seriesDistribuicaoImposto()"
+        [rotulos]="labelsDistribuicaoImposto()"
+        [dica]="tooltipDistribuicao"
+        (fatiaSelecionada)="filtrarPorImposto($event)"
+      >
+        <div chart-extra class="chart-extra">
+          @if (impostoSelecionado()) {
+            <span class="marcador-interacao">
+              <i class="fas fa-scale-balanced"></i>
+              {{ formatarEnum(impostoSelecionado()) }}
+            </span>
+          } @else {
+            <span class="marcador-interacao neutro">Todos os impostos</span>
+          }
+          <button type="button" class="link-reset" (click)="limparInteracoesGraficas()" [disabled]="!mesSelecionado() && !impostoSelecionado()">
+            Limpar
+          </button>
+        </div>
+  </as-cartao-grafico>
+    </div>
+
+    <aside class="space-y-3 destaque-servicos">
+      <header class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-green-700">
+        <span>Insights rápidos</span>
+        <button type="button" class="link-reset" (click)="copiarResumo()">
+          <i class="fas fa-copy"></i> Resumo
+        </button>
+      </header>
+
+      @if (melhoresServicos().destaque) {
+        <div class="destaque-card positivo">
+          <div class="destaque-titulo">
+            <i class="fas fa-arrow-trend-up"></i>
+            Melhor margem
+          </div>
+          <p class="destaque-valor">{{ formatarValor(melhoresServicos().destaque!.valorLiquido) }}</p>
+          <p class="destaque-descricao">
+            {{ melhoresServicos().destaque!.empresa.nome }} • {{ formatarEnum(melhoresServicos().destaque!.status) }}
+          </p>
+          <span [class]="statusClasses(melhoresServicos().destaque!.status)">
+            <i class="fas fa-circle"></i>
+            {{ formatarEnum(melhoresServicos().destaque!.status) }}
+          </span>
+        </div>
+      }
+
+      @if (melhoresServicos().alerta) {
+        <div class="destaque-card alerta">
+          <div class="destaque-titulo">
+            <i class="fas fa-arrow-trend-down"></i>
+            Atenção
+          </div>
+          <p class="destaque-valor">{{ formatarValor(melhoresServicos().alerta!.valorLiquido) }}</p>
+          <p class="destaque-descricao">
+            {{ melhoresServicos().alerta!.empresa.nome }} • {{ formatarEnum(melhoresServicos().alerta!.status) }}
+          </p>
+          <span [class]="statusClasses(melhoresServicos().alerta!.status)">
+            <i class="fas fa-circle"></i>
+            {{ formatarEnum(melhoresServicos().alerta!.status) }}
+          </span>
+        </div>
+      } @else {
+        <div class="destaque-card neutro">
+          <div class="destaque-titulo">
+            <i class="fas fa-check"></i>
+            Portfólio saudável
+          </div>
+          <p class="destaque-descricao">
+            Nenhum serviço com margem crítica no período selecionado.
+          </p>
+        </div>
+      }
+    </aside>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-3">
+    <article class="painel-resumo">
+      <header>
+        <h3>Por status</h3>
+        <span>{{ gruposPorStatus().length }} categorias</span>
+      </header>
+      <ul>
+        @for (item of gruposPorStatus(); track item.chave) {
+          <li>
+            <div>
+              <p class="font-medium">{{ item.label }}</p>
+              <span class="texto-secundario">{{ item.quantidade }} serviços</span>
+            </div>
+            <strong>{{ formatarValor(item.valorLiquido) }}</strong>
+          </li>
+        }
+      </ul>
+    </article>
+
+    <article class="painel-resumo">
+      <header>
+        <h3>Por pagamento</h3>
+        <span>{{ gruposPorPagamento().length }} meios</span>
+      </header>
+      <ul>
+        @for (item of gruposPorPagamento(); track item.chave) {
+          <li>
+            <div>
+              <p class="font-medium">{{ item.label }}</p>
+              <span class="texto-secundario">{{ item.quantidade }} serviços</span>
+            </div>
+            <strong>{{ formatarValor(item.valorTotal) }}</strong>
+          </li>
+        }
+      </ul>
+    </article>
+
+    <article class="painel-resumo">
+      <header>
+        <h3>Top empresas</h3>
+        <span>Top 5</span>
+      </header>
+      <ul>
+        @for (item of gruposPorEmpresa(); track item.chave) {
+          <li>
+            <div>
+              <p class="font-medium">{{ item.label }}</p>
+              <span class="texto-secundario">{{ item.quantidade }} serviços</span>
+            </div>
+            <strong>{{ formatarValor(item.valorTotal) }}</strong>
+          </li>
+        }
+      </ul>
+    </article>
+  </div>
+
+  <div class="as-data-table-card">
+		<div class="as-data-table-card__body">
+			<div class="as-data-table-card__toolbar">
+				<div class="as-data-table-card__legend">
+					<h2>Relatório detalhado</h2>
+					<p>Ordene por coluna para detalhar o comportamento dos serviços.</p>
+				</div>
+				<div class="as-data-table-card__actions">
+					<as-menu-exportacao (selecionou)="onExportar($event)" />
+				</div>
+			</div>
+
+			@if (paginaAtual().length > 0) {
+				<div class="as-data-table-wrapper">
+					<table class="as-data-table">
+						<thead>
+							<tr>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('data')">
+										<span>Data</span>
+										@if (ordenacao().coluna === 'data' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('notaFiscal')">
+										<span>NF</span>
+										@if (ordenacao().coluna === 'notaFiscal' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('empresa')">
+										<span>Empresa</span>
+										@if (ordenacao().coluna === 'empresa' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th>Cliente certificado</th>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('status')">
+										<span>Status</span>
+										@if (ordenacao().coluna === 'status' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('tipoPagamento')">
+										<span>Pagamento</span>
+										@if (ordenacao().coluna === 'tipoPagamento' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('valorTotal')">
+										<span>Valor bruto</span>
+										@if (ordenacao().coluna === 'valorTotal' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('valorImposto')">
+										<span>Imposto</span>
+										@if (ordenacao().coluna === 'valorImposto' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th>
+									<button type="button" class="as-data-table__sort" (click)="ordenarPor('valorLiquido')">
+										<span>Valor líquido</span>
+										@if (ordenacao().coluna === 'valorLiquido' && ordenacao().direcao !== 'none') {
+											<i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+										} @else {
+											<i class="fas fa-sort text-green-300"></i>
+										}
+									</button>
+								</th>
+								<th class="col-acoes">Ações</th>
+							</tr>
+						</thead>
+						<tbody>
+							@for (servico of paginaAtual(); track servico.id; let i = $index) {
+								<tr class="as-data-table__row">
+									<td>{{ servico.data | date:'dd/MM/yyyy' }}</td>
+									<td>{{ servico.notaFiscal ?? '—' }}</td>
+									<td>{{ servico.empresa.nome }}</td>
+									<td>{{ servico.clienteCertificado ?? '—' }}</td>
+									<td>
+										<span [class]="statusClasses(servico.status)">
+											<i class="fas fa-circle"></i>
+											{{ formatarEnum(servico.status) }}
+										</span>
+									</td>
+									<td>{{ formatarEnum(servico.tipoPagamento) }}</td>
+									<td>{{ formatarValor(servico.valorTotal) }}</td>
+									<td>{{ formatarValor(servico.valorImposto) }}</td>
+									<td>{{ formatarValor(servico.valorLiquido) }}</td>
+									<td class="col-acoes">
+										<as-menu-acoes-linha [acoes]="acoesLinha" (acionar)="acaoLinha($event, servico)" />
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			} @else {
+				<as-estado-vazio titulo="Sem serviços" descricao="Ajuste os filtros para visualizar resultados." />
+			}
+		</div>
+		<div class="as-data-table-card__footer">
+			<span>Exibindo {{ paginaAtual().length }} de {{ filtrados().length }} serviços · Página {{ pagina() }}</span>
+			<as-paginacao [pagina]="pagina()" [tamanhoPagina]="tamanhoPagina()" [total]="filtrados().length" (mudouPagina)="mudarPagina($event)" />
+		</div>
+	</div>
+</section>

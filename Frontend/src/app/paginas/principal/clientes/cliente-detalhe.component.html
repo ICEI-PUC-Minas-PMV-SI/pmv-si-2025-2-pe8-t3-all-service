@@ -1,0 +1,234 @@
+@if (aberto()) {
+	<div class="cliente-modal">
+		<div class="cliente-modal__backdrop" (click)="fecharModal()" aria-hidden="true"></div>
+		<div class="cliente-modal__dialog" [class.cliente-modal__dialog--solo]="!painelContatosAberto()">
+			<section class="cliente-modal__content as-outline-surface" [class.cliente-modal__content--solo]="!painelContatosAberto()" role="dialog" aria-modal="true" [attr.aria-label]="isNovo() ? 'Nova empresa' : (clienteAtual()?.razaoSocial ?? 'Empresa')">
+				<as-central-notificacoes />
+				<header class="cliente-modal__header">
+					<div>
+						<h2>{{ isNovo() ? 'Nova empresa' : (clienteAtual()?.razaoSocial ?? 'Empresa') }}</h2>
+						<p>{{ isNovo() ? 'Cadastre os dados principais para criar a empresa.' : 'Visualize ou edite dados cadastrais e fiscais da empresa.' }}</p>
+					</div>
+					<div class="cliente-modal__actions">
+						@if (!isNovo()) {
+							<button type="button" class="cliente-modal__action" (click)="abrirPainelContatos()" aria-label="Gerenciar contatos da empresa" [disabled]="carregando()">
+								<i class="fas fa-address-book"></i>
+								<span>Contatos</span>
+							</button>
+						}
+						<button type="button" class="cliente-modal__close" aria-label="Fechar" (click)="fecharModal()">
+							<i class="fas fa-times"></i>
+						</button>
+					</div>
+				</header>
+
+				@if (carregando()) {
+					<p class="cliente-form__loading" role="status">Processando...</p>
+				}
+				<form class="cliente-form" [formGroup]="form" (ngSubmit)="salvar()" novalidate>
+					<div class="cliente-form__grid">
+						<label class="cliente-form__field">
+							<span>Código interno</span>
+							<input type="text" formControlName="id" readonly />
+						</label>
+						<label class="cliente-form__field">
+							<span>Razão Social *</span>
+							<input type="text" formControlName="razaoSocial" placeholder="Indústria Horizonte Ltda" />
+							@if (form.get('razaoSocial')?.touched && form.get('razaoSocial')?.hasError('required')) {
+								<small class="error">Campo obrigatório</small>
+							}
+							@if (form.get('razaoSocial')?.touched && (form.get('razaoSocial')?.hasError('minlength') || form.get('razaoSocial')?.hasError('maxlength'))) {
+								<small class="error">Deve ter entre 5 e 160 caracteres</small>
+							}
+						</label>
+						<label class="cliente-form__field">
+							<span>CNPJ *</span>
+							<input type="text" formControlName="cnpj" placeholder="00.000.000/0000-00" />
+							@if (form.get('cnpj')?.touched && form.get('cnpj')?.hasError('required')) {
+								<small class="error">Campo obrigatório</small>
+							}
+							@if (form.get('cnpj')?.touched && (form.get('cnpj')?.hasError('minlength') || form.get('cnpj')?.hasError('maxlength'))) {
+								<small class="error">CNPJ deve ter 14-18 caracteres</small>
+							}
+						</label>
+						<label class="cliente-form__field" style="grid-column: 1 / -1;">
+							<span>Endereço *</span>
+							<input type="text" formControlName="endereco" placeholder="Rua Exemplo, 123 - Bairro - Cidade/UF - CEP 00000-000" />
+							@if (form.get('endereco')?.touched && form.get('endereco')?.hasError('required')) {
+								<small class="error">Campo obrigatório</small>
+							}
+							@if (form.get('endereco')?.touched && (form.get('endereco')?.hasError('minlength') || form.get('endereco')?.hasError('maxlength'))) {
+								<small class="error">Deve ter entre 20 e 200 caracteres</small>
+							}
+						</label>
+
+						<label class="cliente-form__field">
+							<span>Usuário responsável *</span>
+							<select formControlName="idUsuario" [disabled]="carregandoUsuarios()">
+								@for (usuario of usuarios(); track usuario.id) {
+									<option [value]="usuario.id">{{ usuario.nome }}</option>
+								}
+							</select>
+							@if (carregandoUsuarios()) {
+								<small>Carregando usuários...</small>
+							} @else if (form.get('idUsuario')?.touched && form.get('idUsuario')?.hasError('required')) {
+								<small class="error">Selecione o usuário responsável.</small>
+							}
+						</label>
+						
+						<!-- Optional legacy fields -->
+						<label class="cliente-form__field">
+							<span>Categoria (opcional)</span>
+							<select formControlName="categoria">
+								@for (categoria of categorias; track categoria) {
+									<option [value]="categoria">{{ categoria }}</option>
+								}
+							</select>
+						</label>
+					</div>
+
+					<div class="cliente-form__status">
+						<label class="cliente-form__switch">
+							<input type="checkbox" formControlName="ativo" />
+							<span></span>
+							<strong>{{ form.get('ativo')?.value ? 'Empresa ativa' : 'Empresa inativa' }}</strong>
+						</label>
+						<small>Desative empresas sem relacionamento ativo. Esta ação não remove o histórico.</small>
+					</div>
+
+					<footer class="cliente-form__footer">
+						@if (isNovo()) {
+							<as-botao variante="fantasma" iconeEsquerda="fas fa-ban" type="button" (click)="cancelar()" [desabilitado]="carregando()">Cancelar</as-botao>
+							<as-botao variante="primario" iconeEsquerda="fas fa-save" type="submit" [desabilitado]="carregando()">Salvar empresa</as-botao>
+						} @else if (modoEdicao()) {
+							<as-botao variante="fantasma" iconeEsquerda="fas fa-trash" type="button" class="cliente-form__excluir" (click)="excluir()" [desabilitado]="carregando()">Excluir</as-botao>
+							<as-botao variante="fantasma" iconeEsquerda="fas fa-ban" type="button" (click)="cancelar()" [desabilitado]="carregando()">Cancelar</as-botao>
+							<as-botao variante="primario" iconeEsquerda="fas fa-save" type="submit" [desabilitado]="carregando()">Salvar alterações</as-botao>
+						} @else {
+							<as-botao variante="fantasma" iconeEsquerda="fas fa-trash" type="button" class="cliente-form__excluir" (click)="excluir()" [desabilitado]="carregando()">Excluir</as-botao>
+							<as-botao variante="fantasma" iconeEsquerda="fas fa-times" type="button" (click)="fecharModal()" [desabilitado]="carregando()">Fechar</as-botao>
+							<as-botao variante="primario" iconeEsquerda="fas fa-pen" type="button" (click)="habilitarEdicao()" [desabilitado]="carregando()">Editar</as-botao>
+						}
+					</footer>
+				</form>
+			</section>
+
+			@if (painelContatosAberto()) {
+				<aside class="cliente-contatos as-outline-surface" role="dialog" aria-modal="false" aria-label="Contatos da empresa">
+					<header class="cliente-contatos__header">
+						<div>
+							<h3>Contatos da empresa</h3>
+							<p>Centralize responsáveis por área para agilizar o relacionamento.</p>
+						</div>
+						<button type="button" class="cliente-contatos__close" aria-label="Fechar painel de contatos" (click)="fecharPainelContatos()">
+							<i class="fas fa-times"></i>
+						</button>
+					</header>
+
+					<section class="cliente-contatos__lista">
+						@if (carregandoContatos()) {
+							<p class="cliente-contatos__empty">Carregando contatos...</p>
+						} @else if (contatos().length === 0) {
+							<p class="cliente-contatos__empty">Nenhum contato cadastrado. Clique em "Novo contato" para registrar o primeiro.</p>
+						} @else {
+							<ul class="cliente-contatos__items">
+								@for (contato of contatos(); track contato.id) {
+									<li class="cliente-contatos__item">
+										<strong>{{ contato.responsavel }}</strong>
+										<span class="cliente-contatos__setor">{{ obterRotuloSetor(contato.setor) }}</span>
+										<span class="cliente-contatos__telefone">{{ contato.telefone }}</span>
+										<span class="cliente-contatos__email">{{ contato.email }}</span>
+										<small class="cliente-contatos__usuario">Usuário: {{ contato.idUsuario }}</small>
+									</li>
+								}
+							</ul>
+						}
+					</section>
+
+					@if (!mostrarFormularioContato()) {
+						<button type="button" class="cliente-contatos__novo" (click)="abrirFormularioContato()" [disabled]="carregandoContatos()">
+							<i class="fas fa-user-plus"></i>
+							<span>Novo contato</span>
+						</button>
+					} @else {
+						<form class="cliente-contatos__form" [formGroup]="contatoForm" (ngSubmit)="salvarContato()" novalidate>
+							<header class="cliente-contatos__form-header">
+								<h4>Novo contato</h4>
+								<button type="button" class="cliente-contatos__cancelar" (click)="cancelarFormularioContato()">
+									<i class="fas fa-times"></i>
+									<span>Fechar</span>
+								</button>
+							</header>
+							@if (contatoAlertas()?.geral) {
+								<p class="cliente-contatos__alerta">{{ contatoAlertas()?.geral }}</p>
+							}
+							<div class="cliente-contatos__grid">
+								<label class="cliente-contatos__field">
+									<span>ID usuário *</span>
+									<select formControlName="idUsuario" [disabled]="carregandoUsuarios()">
+										@for (usuario of usuarios(); track usuario.id) {
+											<option [value]="usuario.id">{{ usuario.nome }}</option>
+										}
+									</select>
+									@if (contatoForm.get('idUsuario')?.touched && contatoForm.get('idUsuario')?.hasError('required')) {
+										<small class="error">Informe o usuário responsável.</small>
+									}
+								</label>
+								<label class="cliente-contatos__field">
+									<span>Responsável *</span>
+									<input type="text" formControlName="responsavel" placeholder="Maria Oliveira" />
+									@if (contatoForm.get('responsavel')?.touched && contatoForm.get('responsavel')?.hasError('required')) {
+										<small class="error">Informe o nome do responsável.</small>
+									}
+								</label>
+								<label class="cliente-contatos__field">
+									<span>Setor *</span>
+									<select formControlName="setor">
+										@for (setor of setores; track setor) {
+											<option [value]="setor">{{ obterRotuloSetor(setor) }}</option>
+										}
+									</select>
+								</label>
+								<label class="cliente-contatos__field">
+									<span>Telefone *</span>
+									<input type="tel" formControlName="telefone" placeholder="11987654321" />
+									@if (contatoForm.get('telefone')?.touched && contatoForm.get('telefone')?.hasError('required')) {
+										<small class="error">Informe um telefone de contato.</small>
+									}
+									@if (contatoForm.get('telefone')?.touched && (contatoForm.get('telefone')?.hasError('minlength') || contatoForm.get('telefone')?.hasError('maxlength'))) {
+										<small class="error">Telefone deve ter entre 11 e 15 dígitos.</small>
+									}
+									@if (contatoForm.get('telefone')?.touched && contatoForm.get('telefone')?.hasError('pattern')) {
+										<small class="error">Use apenas números (11 a 15 dígitos).</small>
+									}
+									@if (contatoAlertas()?.telefone) {
+										<small class="error">{{ contatoAlertas()?.telefone }}</small>
+									}
+								</label>
+								<label class="cliente-contatos__field" style="grid-column: 1 / -1;">
+									<span>Email *</span>
+									<input type="email" formControlName="email" placeholder="contato@empresa.com.br" />
+									@if (contatoForm.get('email')?.touched && contatoForm.get('email')?.hasError('required')) {
+										<small class="error">Informe um email válido.</small>
+									}
+									@if (contatoForm.get('email')?.touched && contatoForm.get('email')?.hasError('email')) {
+										<small class="error">Formato de email inválido.</small>
+									}
+									@if (contatoForm.get('email')?.touched && (contatoForm.get('email')?.hasError('minlength') || contatoForm.get('email')?.hasError('maxlength'))) {
+										<small class="error">Email deve ter entre 11 e 100 caracteres.</small>
+									}
+									@if (contatoAlertas()?.email) {
+										<small class="error">{{ contatoAlertas()?.email }}</small>
+									}
+								</label>
+							</div>
+							<footer class="cliente-contatos__footer">
+								<as-botao type="submit" variante="primario" iconeEsquerda="fas fa-user-plus" [desabilitado]="carregandoContatos()">Adicionar contato</as-botao>
+							</footer>
+						</form>
+					}
+				</aside>
+			}
+		</div>
+	</div>
+}

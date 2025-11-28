@@ -1,0 +1,62 @@
+/* ========== Responsive Grid Systems ========== */
+
+/* KPI Cards Grid: 1x6 (desktop) → 2x3 → 3x2 → 6x1 (mobile) */
+.as-kpi-grid {
+	--as-kpi-min-width: 230px;
+	display: grid;
+	gap: 1.25rem;
+	grid-template-columns: repeat(auto-fit, minmax(var(--as-kpi-min-width), 1fr));
+}
+
+/* Charts Grid: 3x1 (mobile) → 1x2 (tablet) → 1x3 (desktop) */
+.as-charts-grid {
+	display: grid;
+	gap: 1.5rem;
+	grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+	.as-charts-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (min-width: 1280px) {
+	.as-charts-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+/* Table Responsive Column Visibility */
+.as-table-col-priority-1 { display: table-cell; }
+.as-table-col-priority-2 { display: none; }
+.as-table-col-priority-3 { display: none; }
+.as-table-col-priority-4 { display: none; }
+
+@media (min-width: 640px) {
+	.as-table-col-priority-2 { display: table-cell; }
+}
+
+@media (min-width: 1024px) {
+	.as-table-col-priority-3 { display: table-cell; }
+}
+
+@media (min-width: 1280px) {
+	.as-table-col-priority-4 { display: table-cell; }
+}
+
+/* Utility: Text Overflow Prevention */
+.as-text-ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.as-text-ellipsis-2 {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

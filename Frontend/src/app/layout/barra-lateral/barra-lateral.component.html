@@ -1,0 +1,64 @@
+<aside
+  class="menu-lateral bg-white text-green-900 shadow-lg flex flex-col h-full border-r border-green-100"
+  [class.recolhida]="recolhida()"
+>
+  <div class="menu-lateral__cabecalho">
+    <div class="menu-lateral__marca">
+      <img ngSrc="assets/allservicelogo320.png" width="140" height="52" alt="Logo AllService" class="menu-lateral__logo" />
+    </div>
+    <button type="button" class="menu-lateral__alternar" (click)="alternar.emit()" [attr.aria-label]="recolhida() ? 'Expandir menu' : 'Recolher menu'">
+      {{ recolhida() ? '>' : '<' }}
+    </button>
+  </div>
+
+  <nav class="menu-lateral__navegacao" aria-label="Menu principal">
+    @for (secao of secoes; track secao.titulo) {
+      <div class="menu-lateral__secao">
+        <p class="menu-lateral__secao-titulo">{{ secao.titulo }}</p>
+        <ul class="menu-lateral__secao-lista">
+          @for (item of secao.itens; track item.titulo) {
+            <li>
+              <a
+                class="menu-lateral__item"
+                [routerLink]="item.rota"
+                routerLinkActive="ativo"
+                [routerLinkActiveOptions]="{ exact: item.exato ?? false }"
+                [attr.title]="recolhida() ? item.titulo : null"
+              >
+                <span class="menu-lateral__icone">
+                  <i class="{{ item.icone }}"></i>
+                </span>
+                <span class="menu-lateral__rotulo">{{ item.titulo }}</span>
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </nav>
+
+  <div class="menu-lateral__rodape">
+    <!-- Theme Toggle -->
+    <button 
+      type="button" 
+      class="menu-lateral__tema-toggle" 
+      (click)="toggleTheme()" 
+      [attr.aria-label]="themeService.currentTheme() === 'light' ? 'Ativar modo escuro' : 'Ativar modo claro'"
+      [attr.title]="themeService.currentTheme() === 'light' ? 'Modo escuro' : 'Modo claro'"
+    >
+      <div class="tema-toggle__track">
+        <div class="tema-toggle__icons">
+          <i class="fas fa-sun tema-toggle__icon tema-toggle__icon--sun" [class.active]="themeService.currentTheme() === 'light'"></i>
+          <i class="fas fa-moon tema-toggle__icon tema-toggle__icon--moon" [class.active]="themeService.currentTheme() === 'dark'"></i>
+        </div>
+        <div class="tema-toggle__thumb" [class.dark]="themeService.currentTheme() === 'dark'"></div>
+      </div>
+      <span class="tema-toggle__label">Tema</span>
+    </button>
+    
+    <button type="button" class="menu-lateral__saida" (click)="sairSistema()" aria-label="Sair">
+      <i class="fas fa-right-from-bracket"></i>
+      <span>Sair</span>
+    </button>
+  </div>
+</aside>

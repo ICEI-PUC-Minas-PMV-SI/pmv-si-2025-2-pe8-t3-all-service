@@ -1,0 +1,295 @@
+<!--
+  Layout geral do detalhe de serviço.
+  Estrutura:
+  - Hero com status/KPIs
+  - Seções (Identificação, Dimensões, Planos, Financeiro, Observações)
+  - Toolbars condicionais ao modo de edição
+  Cada seção recebe campos ligados ao Reactive Form definido em `servico-detalhe.component.ts`.
+-->
+<as-central-notificacoes />
+
+<section class="servico-shell" [formGroup]="form">
+  <header class="servico-hero as-outline-surface">
+    <div class="servico-hero__header">
+      <div class="servico-hero__title">
+        <span class="servico-hero__eyebrow">{{ isNovo() ? 'Cadastro de serviço' : 'Resumo do serviço' }}</span>
+        <h1>{{ isNovo() ? 'Novo serviço' : ('Serviço ' + (servicoAtual()?.id ?? '')) }}</h1>
+        <p>
+          {{
+          modoEdicao()
+          ? 'Atualize os campos e salve para registrar o serviço.'
+          : 'Revise as informações preenchidas na ordem e habilite a edição se precisar ajustar algo.'
+          }}
+        </p>
+      </div>
+      <div class="servico-hero__chips">
+        <span [ngClass]="['chip', 'chip--status', statusClasse(form.get('status')?.value)]">
+          <i class="fas fa-circle"></i>
+          {{ formatarEnum(form.get('status')?.value) }}
+        </span>
+        <span class="chip chip--payment">
+          <i class="fas fa-credit-card"></i>
+          {{ formatarEnum(form.get('tipoPagamento')?.value) }}
+        </span>
+        @if (form.get('tipoImposto')?.value) {
+        <span class="chip chip--ghost">
+          <i class="fas fa-file-invoice"></i>
+          Imposto: {{ form.get('tipoImposto')?.value }}
+        </span>
+        }
+      </div>
+    </div>
+
+    <div class="servico-hero__stats">
+      <div class="hero-stat">
+        <span>Total contratado</span>
+        <strong>{{ (form.get('valorTotal')?.value ?? 0) | currency:'BRL':'symbol' }}</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Líquido estimado</span>
+        <strong>{{ (form.get('valorLiquido')?.value ?? 0) | currency:'BRL':'symbol' }}</strong>
+      </div>
+      <div class="hero-stat">
+        <span>Comissão prevista</span>
+        <strong>
+          {{ comissaoCalculada() | currency:'BRL':'symbol' }}
+          <small>({{ form.get('comissaoPercentual')?.value ?? 0 }}%)</small>
+        </strong>
+      </div>
+    </div>
+  </header>
+
+  <div class="servico-content">
+    <!-- Identificação: datas, NF, relacionamentos (empresa/usuário). -->
+    <article class="servico-section as-outline-surface" id="identificacao">
+      <header class="servico-section__header">
+        <h2>Identificação</h2>
+        <p>Dados gerais e referências do serviço.</p>
+      </header>
+      <div class="servico-fields">
+        <label class="field">
+          <span>Data</span>
+          <input type="date" formControlName="data" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>Vencimento</span>
+          <input type="date" formControlName="dataVencimento" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>NF-e</span>
+          <input type="text" formControlName="notaFiscal" placeholder="0000" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>Cliente</span>
+          @if (modoEdicao()) {
+          <select formControlName="idEmpresa" [disabled]="carregandoEmpresas() || empresas().length === 0">
+            <option value="" disabled>Selecione uma empresa</option>
+            @for (empresa of empresas(); track empresa.id) {
+            <option [value]="empresa.id">{{ empresa.razaoSocial }}</option>
+            }
+          </select>
+          } @else {
+          <input type="text" formControlName="cliente" placeholder="Nome da empresa" readOnly />
+          }
+        </label>
+        <label class="field">
+          <span>Cliente certificado</span>
+          <input type="text" formControlName="clienteCertificado" placeholder="Destinatário"
+            [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>Responsável</span>
+          @if (modoEdicao()) {
+          <select formControlName="idUsuario" [disabled]="carregandoUsuarios() || usuarios().length === 0">
+            <option value="" disabled>Selecione um usuário</option>
+            @for (usuario of usuarios(); track usuario.id) {
+            <option [value]="usuario.id">{{ usuario.nome }}</option>
+            }
+          </select>
+          } @else {
+          <input type="text" formControlName="usuarioResponsavel" readOnly />
+          }
+        </label>
+        <label class="field">
+          <span>Empresa</span>
+          <input type="text" formControlName="empresaNome" readOnly />
+        </label>
+        <label class="field">
+          <span>CNPJ</span>
+          <input type="text" formControlName="empresaCnpj" readOnly />
+        </label>
+      </div>
+    </article>
+
+    <!-- Dimensões principais da peça calibrada. -->
+    <article class="servico-section as-outline-surface" id="dimensoes">
+      <header class="servico-section__header">
+        <h2>Dimensões da peça</h2>
+        <p>Características principais utilizadas na calibração.</p>
+      </header>
+      <div class="servico-fields">
+        <label class="field">
+          <span>Quantidade</span>
+          <input type="number" step="1" min="0" formControlName="quantidadePecas" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>Descrição</span>
+          <input type="text" formControlName="descricaoPeca" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>Ø (mm)</span>
+          <input type="number" step="0.1" formControlName="diametroPeca" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>L (mm)</span>
+          <input type="number" step="0.1" formControlName="larguraPeca" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>LT (mm)</span>
+          <input type="number" step="0.1" formControlName="larguraTotalPeca" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>P (kg)</span>
+          <input type="number" step="0.01" formControlName="pesoPeca" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>RPM</span>
+          <input type="number" step="10" formControlName="rpmPeca" [readOnly]="!modoEdicao()" />
+        </label>
+      </div>
+    </article>
+
+    <!-- Planos de medição (valores duplicados para plano 1 e 2). -->
+    <article class="servico-section as-outline-surface" id="planos">
+      <header class="servico-section__header">
+        <h2>Planos e tolerâncias</h2>
+        <p>Registre os valores aferidos em cada plano analisado.</p>
+      </header>
+      <div class="servico-planos">
+        <div class="servico-planos__col">
+          <h3>Plano 1</h3>
+          <div class="servico-fields">
+            <label class="field">
+              <span>Permitido</span>
+              <input type="number" step="0.001" formControlName="planoUmPermitido" [readOnly]="!modoEdicao()" />
+            </label>
+            <label class="field">
+              <span>Encontrado</span>
+              <input type="number" step="0.001" formControlName="planoUmEncontrado" [readOnly]="!modoEdicao()" />
+            </label>
+            <label class="field">
+              <span>Raio</span>
+              <input type="number" step="0.001" formControlName="raioPlanoUm" [readOnly]="!modoEdicao()" />
+            </label>
+            <label class="field">
+              <span>Remanescente</span>
+              <input type="number" step="0.001" formControlName="remanescentePlanoUm" [readOnly]="!modoEdicao()" />
+            </label>
+          </div>
+        </div>
+        <div class="servico-planos__col">
+          <h3>Plano 2</h3>
+          <div class="servico-fields">
+            <label class="field">
+              <span>Permitido</span>
+              <input type="number" step="0.001" formControlName="planoDoisPermitido" [readOnly]="!modoEdicao()" />
+            </label>
+            <label class="field">
+              <span>Encontrado</span>
+              <input type="number" step="0.001" formControlName="planoDoisEncontrado" [readOnly]="!modoEdicao()" />
+            </label>
+            <label class="field">
+              <span>Raio</span>
+              <input type="number" step="0.001" formControlName="raioPlanoDois" [readOnly]="!modoEdicao()" />
+            </label>
+            <label class="field">
+              <span>Remanescente</span>
+              <input type="number" step="0.001" formControlName="remanescentePlanoDois" [readOnly]="!modoEdicao()" />
+            </label>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Bloco financeiro: status, pagamento, impostos e comissão. -->
+    <article class="servico-section as-outline-surface" id="financeiro">
+      <header class="servico-section__header">
+        <h2>Financeiro</h2>
+        <p>Informações de cobrança e acompanhamento comercial.</p>
+      </header>
+      <div class="servico-fields">
+        <label class="field">
+          <span>Status</span>
+          <select formControlName="status" [disabled]="!modoEdicao()">
+            <option [ngValue]="null">Selecione</option>
+            @for (st of statusOptions; track st) {
+            <option [ngValue]="st">{{ formatarEnum(st) }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Tipo de pagamento</span>
+          <select formControlName="tipoPagamento" [disabled]="!modoEdicao()">
+            <option [ngValue]="null">Selecione</option>
+            @for (pg of pagamentoOptions; track pg) {
+            <option [ngValue]="pg">{{ formatarEnum(pg) }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Tipo de imposto</span>
+          <select formControlName="tipoImposto" [disabled]="!modoEdicao()">
+            <option [ngValue]="null">Isento</option>
+            @for (imp of impostoOptions; track imp) {
+            <option [ngValue]="imp">{{ imp }}</option>
+            }
+          </select>
+        </label>
+        <label class="field">
+          <span>Valor do imposto</span>
+          <input type="number" step="0.01" min="0" formControlName="valorImposto" [readOnly]="!modoEdicao()" />
+        </label>
+        <label class="field">
+          <span>Valor líquido</span>
+          <input type="number" formControlName="valorLiquido" readOnly />
+        </label>
+      </div>
+    </article>
+
+    <!-- Observações gerais x internas (mostradas ao cliente ou apenas ao time). -->
+    <article class="servico-section as-outline-surface" id="observacoes">
+      <header class="servico-section__header">
+        <h2>Observações</h2>
+        <p>Mensagens para o cliente e registros internos.</p>
+      </header>
+      <div class="servico-observacoes">
+        <label class="field field--textarea">
+          <span>Observação</span>
+          <textarea rows="4" formControlName="observacao" [readOnly]="!modoEdicao()"></textarea>
+        </label>
+        <label class="field field--textarea">
+          <span>Observação interna</span>
+          <textarea rows="4" formControlName="observacaoInterna" [readOnly]="!modoEdicao()"></textarea>
+        </label>
+      </div>
+    </article>
+  </div>
+
+  <!-- Toolbar com ações de edição; rende apenas quando `modoEdicao` é true. -->
+  @if (modoEdicao()) {
+  <footer class="servico-toolbar as-outline-surface">
+    <div class="servico-toolbar__info">
+      <i class="fas fa-info-circle"></i>
+      <span>Salve as alterações para aplicá-las à ordem.</span>
+    </div>
+    <div class="servico-toolbar__actions">
+      <as-botao variante="fantasma" iconeEsquerda="ph ph-arrow-counter-clockwise" (click)="cancelarEdicao()">
+        Descartar
+      </as-botao>
+      <as-botao variante="primario" iconeEsquerda="ph ph-floppy-disk" (click)="salvar()">
+        Salvar serviço
+      </as-botao>
+    </div>
+  </footer>
+  }
+</section>

@@ -1,0 +1,218 @@
+<div class="modal-backdrop" (click)="fecharModal()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <header class="modal-header">
+      <div>
+        <h2>Calculadora de impostos</h2>
+        <p>Simule e aplique ajustes de alíquota para serviços em um período específico</p>
+      </div>
+      <button type="button" class="modal-close" (click)="fecharModal()" aria-label="Fechar">
+        <i class="fas fa-times"></i>
+      </button>
+    </header>
+
+    <form class="modal-body" (submit)="$event.preventDefault(); aplicarCalculo()">
+      <!-- Left Column: Form -->
+      <div class="modal-body__form">
+        <!-- Porcentagem do imposto -->
+        <section class="form-section">
+          <label class="form-label">
+            <span class="form-label-text">
+              <i class="fas fa-percent"></i>
+              Alíquota do imposto
+            </span>
+            <input
+              type="number"
+              class="form-input"
+              [(ngModel)]="porcentagem"
+              name="porcentagem"
+              placeholder="Ex: 15.34"
+              step="0.01"
+              min="0"
+              max="100"
+              required
+            />
+            <span class="form-hint">Informe a porcentagem (ex: 15.34 para 15,34%)</span>
+          </label>
+        </section>
+
+        <!-- Tipo de imposto -->
+        <section class="form-section">
+          <fieldset class="form-fieldset">
+            <legend class="form-legend">
+              <i class="fas fa-scale-balanced"></i>
+              Tipo de imposto
+            </legend>
+            <div class="radio-group">
+              @for (tipo of tiposImposto; track tipo) {
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="tipoImposto"
+                    [value]="tipo"
+                    [(ngModel)]="tipoImpostoSelecionado"
+                    [checked]="tipoImpostoSelecionado() === tipo"
+                  />
+                  <span>{{ formatarEnum(tipo) }}</span>
+                </label>
+              }
+            </div>
+          </fieldset>
+        </section>
+
+        <!-- Período -->
+        <section class="form-section">
+          <fieldset class="form-fieldset">
+            <legend class="form-legend">
+              <i class="fas fa-calendar-days"></i>
+              Período de aplicação
+            </legend>
+            <div class="radio-group">
+              @for (periodo of periodos; track periodo.valor) {
+                <label class="radio-label">
+                  <input
+                    type="radio"
+                    name="periodo"
+                    [value]="periodo.valor"
+                    [(ngModel)]="periodoSelecionado"
+                    [checked]="periodoSelecionado() === periodo.valor"
+                  />
+                  <span>{{ periodo.label }}</span>
+                </label>
+              }
+            </div>
+          </fieldset>
+        </section>
+
+        <!-- Data customizada -->
+        @if (mostrarCampoData()) {
+          <section class="form-section form-section--date-range">
+            <label class="form-label">
+              <span class="form-label-text">Data inicial</span>
+              <input
+                type="date"
+                class="form-input"
+                [(ngModel)]="dataInicio"
+                name="dataInicio"
+                required
+              />
+            </label>
+            <label class="form-label">
+              <span class="form-label-text">Data final</span>
+              <input
+                type="date"
+                class="form-input"
+                [(ngModel)]="dataFim"
+                name="dataFim"
+                required
+              />
+            </label>
+          </section>
+        }
+
+        <!-- Info box -->
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>Como funciona</strong>
+            <p>
+              A nova alíquota será aplicada a todos os serviços do tipo selecionado dentro do período
+              especificado. O sistema recalculará o valor do imposto e o valor líquido automaticamente.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Preview -->
+      <aside class="modal-body__preview">
+        <header class="preview-header">
+          <h3>
+            <i class="fas fa-chart-line"></i>
+            Pré-visualização
+          </h3>
+          <p>Veja o impacto do novo cálculo antes de aplicar</p>
+        </header>
+
+        @if (previewCalculo().servicosAfetados === 0 || porcentagem() === null) {
+          <div class="preview-empty">
+            <i class="fas fa-calculator"></i>
+            <p>Digite uma alíquota para visualizar o cálculo</p>
+          </div>
+        } @else {
+          <!-- Serviços afetados -->
+          <div class="preview-metric preview-metric--highlight">
+            <span class="preview-metric__label">Serviços afetados</span>
+            <span class="preview-metric__value">{{ previewCalculo().servicosAfetados }}</span>
+          </div>
+
+          <!-- Valor bruto total -->
+          <div class="preview-metric">
+            <span class="preview-metric__label">Valor bruto total</span>
+            <span class="preview-metric__value">{{ formatarMoeda(previewCalculo().valorBrutoTotal) }}</span>
+          </div>
+
+          <div class="preview-divider"></div>
+
+          <!-- Comparação de impostos -->
+          <div class="preview-comparison">
+            <div class="preview-comparison__side preview-comparison__side--before">
+              <div class="preview-comparison__label">Imposto atual</div>
+              <div class="preview-comparison__value">{{ formatarMoeda(previewCalculo().impostoAnterior) }}</div>
+            </div>
+            <div class="preview-comparison__arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="preview-comparison__side preview-comparison__side--after">
+              <div class="preview-comparison__label">Novo imposto</div>
+              <div class="preview-comparison__value">{{ formatarMoeda(previewCalculo().impostoNovo) }}</div>
+            </div>
+          </div>
+
+          <!-- Diferença de imposto -->
+          <div class="preview-delta" [class.preview-delta--positive]="previewCalculo().diferencaImposto > 0" [class.preview-delta--negative]="previewCalculo().diferencaImposto < 0">
+            <span class="preview-delta__label">Diferença de imposto</span>
+            <span class="preview-delta__value">
+              @if (previewCalculo().diferencaImposto > 0) {
+                <i class="fas fa-arrow-up"></i>
+              } @else if (previewCalculo().diferencaImposto < 0) {
+                <i class="fas fa-arrow-down"></i>
+              }
+              {{ formatarMoeda(abs(previewCalculo().diferencaImposto)) }}
+            </span>
+          </div>
+
+          <div class="preview-divider"></div>
+
+          <!-- Comparação de valores líquidos -->
+          <div class="preview-comparison">
+            <div class="preview-comparison__side preview-comparison__side--before">
+              <div class="preview-comparison__label">Líquido atual</div>
+              <div class="preview-comparison__value">{{ formatarMoeda(previewCalculo().liquidoAnterior) }}</div>
+            </div>
+            <div class="preview-comparison__arrow">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div class="preview-comparison__side preview-comparison__side--after">
+              <div class="preview-comparison__label">Novo líquido</div>
+              <div class="preview-comparison__value">{{ formatarMoeda(previewCalculo().liquidoNovo) }}</div>
+            </div>
+          </div>
+        }
+      </aside>
+    </form>
+
+    <footer class="modal-footer">
+      <button type="button" class="btn btn--secondary" (click)="fecharModal()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn btn--primary"
+        (click)="aplicarCalculo()"
+        [disabled]="!formularioValido()"
+      >
+        <i class="fas fa-check"></i>
+        Aplicar cálculo
+      </button>
+    </footer>
+  </div>
+</div>

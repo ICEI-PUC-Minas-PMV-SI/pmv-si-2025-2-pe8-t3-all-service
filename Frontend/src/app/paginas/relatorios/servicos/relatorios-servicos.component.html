@@ -1,0 +1,347 @@
+<section class="relatorios-page">
+  <as-central-notificacoes />
+
+  <!-- Filtros expandíveis -->
+  @if (mostrarFiltros()) {
+    <section class="filtros-section as-outline-surface">
+      <form class="filtros-form" (submit)="$event.preventDefault()">
+        <div class="filtros-grid">
+          <label class="filtro-field">
+            <span>Data inicial</span>
+            <input type="date" class="filtro-input" [ngModel]="dataInicio()" (ngModelChange)="setDataInicio($event)" name="dataInicio" />
+          </label>
+
+          <label class="filtro-field">
+            <span>Data final</span>
+            <input type="date" class="filtro-input" [ngModel]="dataFim()" (ngModelChange)="setDataFim($event)" name="dataFim" />
+          </label>
+
+          <div class="filtro-group">
+            <span>Status</span>
+            <div class="filtro-chips">
+              @for (s of statusDisponiveis; track s) {
+                <button
+                  type="button"
+                  class="filtro-chip"
+                  [class.filtro-chip--active]="statusSelecionados().has(s)"
+                  (click)="toggleStatus(s)"
+                >
+                  {{ formatarEnum(s) }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="filtro-group">
+            <span>Pagamento</span>
+            <div class="filtro-chips">
+              @for (p of pagamentosDisponiveis; track p) {
+                <button
+                  type="button"
+                  class="filtro-chip"
+                  [class.filtro-chip--active]="pagamentosSelecionados().has(p)"
+                  (click)="togglePagamento(p)"
+                >
+                  {{ formatarEnum(p) }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="filtro-group">
+            <span>Tipo de imposto</span>
+            <div class="filtro-chips">
+              @for (i of impostosDisponiveis; track i) {
+                <button
+                  type="button"
+                  class="filtro-chip"
+                  [class.filtro-chip--active]="impostosSelecionados().has(i)"
+                  (click)="toggleImposto(i)"
+                >
+                  {{ formatarEnum(i) }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <footer class="filtros-footer">
+          <span class="filtros-status">
+            {{ servicosFiltrados().length }} de {{ servicos().length }} serviços visíveis
+          </span>
+          <button type="button" class="btn btn--ghost" (click)="limparFiltros()" [disabled]="!temFiltrosAtivos()">
+            <i class="fas fa-eraser"></i>
+            Limpar filtros
+          </button>
+        </footer>
+      </form>
+    </section>
+  }
+
+  <!-- 6 KPI Cards -->
+  <section class="kpis-grid">
+    <as-cartao-indicador
+      titulo="Serviços"
+      [valor]="kpis().totalServicos"
+      [descricao]="kpis().descricaoServicos"
+      icone="fas fa-briefcase"
+      tendencia="flat"
+      [accent]="'#2563eb'"
+    />
+    <as-cartao-indicador
+      titulo="Valor bruto"
+      [valor]="formatarMoeda(kpis().valorBruto)"
+      descricao="Faturamento total"
+      icone="fas fa-coins"
+      tendencia="up"
+      [accent]="'#16a34a'"
+      [tipo]="'sucesso'"
+    />
+    <as-cartao-indicador
+      titulo="Valor líquido"
+      [valor]="formatarMoeda(kpis().valorLiquido)"
+      [descricao]="'Ticket médio ' + formatarMoeda(kpis().ticketMedio)"
+      icone="fas fa-chart-line"
+      tendencia="up"
+      [accent]="'#0ea5e9'"
+      [tipo]="'sucesso'"
+    />
+    <as-cartao-indicador
+      titulo="Impostos"
+      [valor]="formatarMoeda(kpis().totalImpostos)"
+      [descricao]="kpis().cargaTributaria.toFixed(1) + '% do bruto'"
+      icone="fas fa-scale-balanced"
+      tendencia="down"
+      [accent]="'#dc2626'"
+      [tipo]="'erro'"
+    />
+    <as-cartao-indicador
+      titulo="Concluídos"
+      [valor]="kpis().servicosConcluidos"
+      [descricao]="kpis().percentualConcluidos.toFixed(1) + '% do total'"
+      icone="fas fa-check-circle"
+      tendencia="up"
+      [accent]="'#22c55e'"
+      [tipo]="'sucesso'"
+    />
+    <as-cartao-indicador
+      titulo="Em andamento"
+      [valor]="kpis().servicosEmAndamento"
+      [descricao]="kpis().percentualEmAndamento.toFixed(1) + '% do total'"
+      icone="fas fa-spinner"
+      tendencia="flat"
+      [accent]="'#f59e0b'"
+      [tipo]="'alerta'"
+    />
+  </section>
+
+  <!-- 3 Interactive Graphs -->
+  <section class="graficos-section">
+    @if (temFiltroGrafico()) {
+      <div class="graficos-section__actions">
+        <button type="button" class="btn btn--ghost btn--sm" (click)="limparFiltrosGraficos()">
+          <i class="fas fa-filter-circle-xmark"></i>
+          Limpar
+        </button>
+      </div>
+    }
+
+    <div class="graficos-grid">
+      <!-- Gráfico 1: Distribuição por status -->
+      <as-cartao-grafico
+        titulo="Distribuição por status"
+        descricao="Quantidade de serviços por status"
+        icone="fas fa-chart-pie"
+        tipo="donut"
+        [series]="graficoStatus().series"
+        [rotulos]="graficoStatus().labels"
+        [cores]="['#10b981', '#3b82f6', '#f59e0b', '#06b6d4', '#8b5cf6', '#ef4444']"
+        (fatiaSelecionada)="filtrarPorStatusGrafico($event)"
+      >
+        <div chart-extra class="chart-extra">
+          @if (statusSelecionadoGrafico()) {
+            <span class="badge-filtro">
+              <i class="fas fa-filter"></i>
+              {{ formatarEnum(statusSelecionadoGrafico()!) }}
+            </span>
+          }
+        </div>
+      </as-cartao-grafico>
+
+      <!-- Gráfico 2: Evolução temporal -->
+      <as-cartao-grafico
+        titulo="Evolução mensal"
+        descricao="Valor bruto e líquido por mês"
+        icone="fas fa-chart-area"
+        tipo="area"
+        [series]="graficoTemporal().series"
+        [eixoX]="{ categories: graficoTemporal().categorias }"
+        [cores]="['#0f766e', '#10b981']"
+        [tracado]="{ curve: 'smooth', width: 2 }"
+        (pontoSelecionado)="filtrarPorMes($event)"
+      >
+        <div chart-extra class="chart-extra">
+          @if (mesSelecionadoGrafico()) {
+            <span class="badge-filtro">
+              <i class="fas fa-calendar"></i>
+              {{ formatarMesAno(mesSelecionadoGrafico()!) }}
+            </span>
+          }
+        </div>
+      </as-cartao-grafico>
+
+      <!-- Gráfico 3: Composição tributária -->
+      <as-cartao-grafico
+        titulo="Composição tributária"
+        descricao="Distribuição de impostos por tipo"
+        icone="fas fa-chart-bar"
+        tipo="bar"
+        [series]="graficoImpostos().series"
+        [eixoX]="{ categories: graficoImpostos().categorias }"
+        [cores]="['#14b8a6', '#f59e0b']"
+        (pontoSelecionado)="filtrarPorImpostoGrafico($event)"
+      >
+        <div chart-extra class="chart-extra">
+          @if (impostoSelecionadoGrafico()) {
+            <span class="badge-filtro">
+              <i class="fas fa-scale-balanced"></i>
+              {{ formatarEnum(impostoSelecionadoGrafico()!) }}
+            </span>
+          }
+        </div>
+      </as-cartao-grafico>
+    </div>
+  </section>
+
+  <!-- Table with toolbar and multi-select -->
+  @if (selecionados().size > 0) {
+    <as-barra-selecao
+      [quantidade]="selecionados().size"
+      (exportar)="exportarSelecionadas()"
+      (cancelar)="limparSelecao()"
+    />
+  }
+  
+  <section class="as-data-table-card">
+    <div class="as-data-table-card__body">
+      <div class="as-data-table-card__toolbar">
+        <div class="as-data-table-card__legend">
+          <h3>Serviços registrados</h3>
+          <p>Visualize detalhes, selecione linhas para exportar ou aplique filtros avançados.</p>
+        </div>
+        <div class="as-data-table-card__actions">
+          <as-seletor-colunas [colunas]="colunas()" (alterou)="alternarColuna($event)" />
+          <as-menu-exportacao (selecionou)="onExportar($event)" />
+        </div>
+      </div>
+
+      @if (servicosFiltrados().length > 0) {
+        <div class="as-data-table-wrapper">
+          <table class="as-data-table">
+            <thead>
+              <tr>
+                <th class="w-12">
+                  <input 
+                    type="checkbox" 
+                    [checked]="todosSelecionadosPagina()" 
+                    [indeterminate]="indeterminadoPagina()" 
+                    (change)="toggleSelecionarTodosPagina($event)" 
+                    aria-label="Selecionar página" 
+                  />
+                </th>
+                @for (coluna of colunasVisiveis(); track coluna.id) {
+                  <th 
+                    [asOrdenavel]="coluna.id"
+                    (click)="clicarOrdenacao(coluna.id, $event)"
+                  >
+                    <span>{{ coluna.label }}</span>
+                    <i 
+                      class="fas"
+                      [class.fa-sort-up]="ordenacao().coluna === coluna.id && ordenacao().direcao === 'asc'"
+                      [class.fa-sort-down]="ordenacao().coluna === coluna.id && ordenacao().direcao === 'desc'"
+                      [class.fa-sort]="ordenacao().coluna !== coluna.id"
+                      [class.text-muted]="ordenacao().coluna !== coluna.id"
+                    ></i>
+                  </th>
+                }
+                <th class="col-acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (servico of paginaAtual(); track servico.id; let idx = $index) {
+                <tr 
+                  class="as-data-table__row"
+                  [class.is-selected]="isSelecionado(servico.id)"
+                  [class.is-even]="idx % 2 === 0"
+                  [class.is-odd]="idx % 2 === 1"
+                  (click)="toggleSelecionado(servico.id)"
+                >
+                  <td (click)="$event.stopPropagation()">
+                    <input 
+                      type="checkbox" 
+                      [checked]="isSelecionado(servico.id)" 
+                      (change)="toggleSelecionado(servico.id)" 
+                      [attr.aria-label]="'Selecionar serviço ' + servico.id" 
+                    />
+                  </td>
+                  @for (coluna of colunasVisiveis(); track coluna.id) {
+                    <td>
+                      @switch (coluna.id) {
+                        @case ('data') { {{ servico.data | date:'dd/MM/yyyy' }} }
+                        @case ('notaFiscal') { {{ servico.notaFiscal ?? '—' }} }
+                        @case ('empresa') { {{ servico.empresa.nome }} }
+                        @case ('cliente') { {{ servico.clienteCertificado ?? '—' }} }
+                        @case ('status') {
+                          <span [class]="statusClasses(servico.status)">
+                            <i class="fas fa-circle"></i>
+                            {{ formatarEnum(servico.status) }}
+                          </span>
+                        }
+                        @case ('pagamento') { {{ formatarEnum(servico.tipoPagamento) }} }
+                        @case ('valorTotal') { {{ formatarMoeda(servico.valorTotal) }} }
+                        @case ('imposto') { {{ formatarMoeda(servico.valorImposto) }} }
+                        @case ('valorLiquido') { {{ formatarMoeda(servico.valorLiquido) }} }
+                      }
+                    </td>
+                  }
+                  <td class="col-acoes" (click)="$event.stopPropagation()">
+                    <as-menu-acoes-linha [acoes]="acoesLinha" (acionar)="acaoLinha($event, servico)" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="as-data-table-card__empty">
+          <as-estado-vazio titulo="Nenhum serviço encontrado" descricao="Ajuste os filtros para visualizar resultados." />
+        </div>
+      }
+    </div>
+    
+    <footer class="as-data-table-card__footer">
+      <div>
+        @if (paginaAtual().length) {
+          {{ (pagina() - 1) * tamanhoPagina() + 1 }}–{{ pagina() * tamanhoPagina() < servicosFiltrados().length ? pagina() * tamanhoPagina() : servicosFiltrados().length }} de {{ servicosFiltrados().length }} serviços
+        } @else {
+          0 de {{ servicosFiltrados().length }} serviços
+        }
+      </div>
+      <as-paginacao
+        [pagina]="pagina()"
+        [tamanhoPagina]="tamanhoPagina()"
+        [total]="servicosFiltrados().length"
+        (mudouPagina)="mudarPagina($event)"
+      />
+    </footer>
+  </section>
+
+  <!-- Tax Calculator Modal -->
+  @if (mostrarCalculadoraImposto()) {
+    <app-calculo-imposto-modal
+      [servicos]="servicos()"
+      (fechar)="fecharCalculadoraImposto()"
+      (aplicar)="aplicarCalculoImposto($event)"
+    />
+  }
+</section>

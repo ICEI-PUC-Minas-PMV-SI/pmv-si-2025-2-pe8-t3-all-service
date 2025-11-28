@@ -1,0 +1,374 @@
+<as-central-notificacoes />
+
+<section class="usuarios-shell">
+  @if (mostrarFiltros()) {
+    <section class="usuarios-filtros as-outline-surface" aria-label="Filtros avançados">
+      <header class="usuarios-filtros__cabecalho">
+        <div>
+          <h2>Filtros avançados</h2>
+          <p>Combine status, perfis e funções para refinar os resultados.</p>
+        </div>
+        <button type="button" class="usuarios-filtros__clear as-filter-reset" (click)="limparFiltros()" [disabled]="!temFiltroAtivo()">
+          <i class="fas fa-eraser"></i>
+          Limpar filtros
+        </button>
+      </header>
+
+      <div class="usuarios-filtros__grid">
+        <article>
+          <h3>Status</h3>
+          <div class="usuarios-chips">
+            @for (status of statusDisponiveis; track status) {
+              <button type="button"
+                      class="usuarios-chip"
+                      [class.usuarios-chip--ativo]="filtroStatus().has(status)"
+                      (click)="alternarStatus(status)">
+                {{ status }}
+              </button>
+            }
+          </div>
+        </article>
+
+        <article>
+          <h3>Perfis</h3>
+          <div class="usuarios-chips">
+            @for (perfil of perfisDisponiveis; track perfil) {
+              <button type="button"
+                      class="usuarios-chip"
+                      [class.usuarios-chip--ativo]="filtroPerfis().has(perfil)"
+                      (click)="alternarPerfil(perfil)">
+                {{ perfil }}
+              </button>
+            }
+          </div>
+        </article>
+
+        <article>
+          <h3>Funções</h3>
+          <div class="usuarios-chips">
+            @if (funcoesDisponiveis().length === 0) {
+              <span class="usuarios-chip usuarios-chip--vazio">Nenhuma função cadastrada</span>
+            } @else {
+              @for (funcao of funcoesDisponiveis(); track funcao) {
+                <button type="button"
+                        class="usuarios-chip"
+                        [class.usuarios-chip--ativo]="filtroFuncoes().has(funcao)"
+                        (click)="alternarFuncao(funcao)">
+                  {{ funcao }}
+                </button>
+              }
+            }
+          </div>
+        </article>
+      </div>
+    </section>
+  }
+
+  <section class="usuarios-kpis as-kpi-grid" aria-label="Indicadores principais">
+    <as-cartao-indicador
+      titulo="Usuários ativos"
+      [valor]="formatarNumero(totalAtivos())"
+      [descricao]="percentual(totalAtivos()) + ' do total'"
+      icone="fas fa-user-check"
+      tendencia="up"
+      [accent]="'#16a34a'"
+      [tipo]="'sucesso'"
+    />
+
+    <as-cartao-indicador
+      titulo="Usuários inativos"
+      [valor]="formatarNumero(totalPendentes())"
+      [descricao]="percentual(totalPendentes()) + ' fora de operação'"
+      icone="fas fa-user-clock"
+      tendencia="flat"
+      [accent]="'#f59e0b'"
+      [tipo]="'alerta'"
+    />
+
+    <as-cartao-indicador
+      titulo="Administradores"
+      [valor]="formatarNumero(totalAdministradores())"
+      [descricao]="percentual(totalAdministradores()) + ' com privilégios'"
+      icone="fas fa-shield-alt"
+      tendencia="flat"
+      [accent]="'#6366f1'"
+    />
+
+    <as-cartao-indicador
+      titulo="Novos no mês"
+      [valor]="formatarNumero(novosUltimoMes())"
+      [descricao]="'Últimos 30 dias'"
+      icone="fas fa-user-plus"
+      tendencia="up"
+      [accent]="'#0ea5e9'"
+      [tipo]="'sucesso'"
+    />
+  </section>
+
+  <div class="as-data-table-card">
+    <div class="as-data-table-card__body">
+      <div class="as-data-table-card__toolbar">
+        <div class="as-data-table-card__legend">
+          <h2>Usuários cadastrados</h2>
+          <p>{{ totalRegistros() }} resultado{{ totalRegistros() === 1 ? '' : 's' }} encontrados</p>
+        </div>
+        <div class="as-data-table-card__actions">
+          @if (temFiltroAtivo()) {
+            <span class="usuarios-table-card__badge">Filtros aplicados</span>
+          }
+          <button type="button" class="usuarios-chip usuarios-chip--ativo" (click)="alternarStatus('Ativo')">
+            <i class="fas fa-user-check"></i>
+            {{ totalAtivos() }} ativos
+          </button>
+          <button type="button" class="usuarios-chip usuarios-chip--pendente" (click)="alternarStatus('Inativo')">
+            <i class="fas fa-user-clock"></i>
+            {{ totalPendentes() }} inativos
+          </button>
+        </div>
+      </div>
+
+      @if (carregando()) {
+        <div class="usuarios-table-card__resumo" role="status">Carregando usuários...</div>
+      }
+
+      @if (!carregando() && erro()) {
+        <div class="usuarios-table-card__resumo" role="alert">{{ erro() }}</div>
+      }
+
+      @let listaPagina = usuariosPagina();
+      @if (listaPagina.length > 0) {
+        <div class="as-data-table-wrapper">
+          <table class="as-data-table">
+            <thead>
+              <tr>
+                <th (click)="ordenarPor('nome')">
+                  <span class="inline-flex items-center gap-1">
+                    Nome
+                    @if (ordenacao().coluna === 'nome' && ordenacao().direcao !== 'none') {
+                      <i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+                    } @else {
+                      <i class="fas fa-sort text-green-300"></i>
+                    }
+                  </span>
+                </th>
+                <th (click)="ordenarPor('email')">
+                  <span class="inline-flex items-center gap-1">
+                    E-mail
+                    @if (ordenacao().coluna === 'email' && ordenacao().direcao !== 'none') {
+                      <i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+                    } @else {
+                      <i class="fas fa-sort text-green-300"></i>
+                    }
+                  </span>
+                </th>
+                <th (click)="ordenarPor('perfil')">
+                  <span class="inline-flex items-center gap-1">
+                    Perfil
+                    @if (ordenacao().coluna === 'perfil' && ordenacao().direcao !== 'none') {
+                      <i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+                    } @else {
+                      <i class="fas fa-sort text-green-300"></i>
+                    }
+                  </span>
+                </th>
+                <th (click)="ordenarPor('funcao')">
+                  <span class="inline-flex items-center gap-1">
+                    Função
+                    @if (ordenacao().coluna === 'funcao' && ordenacao().direcao !== 'none') {
+                      <i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+                    } @else {
+                      <i class="fas fa-sort text-green-300"></i>
+                    }
+                  </span>
+                </th>
+                <th (click)="ordenarPor('statusUsuario')">
+                  <span class="inline-flex items-center gap-1">
+                    Status
+                    @if (ordenacao().coluna === 'statusUsuario' && ordenacao().direcao !== 'none') {
+                      <i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+                    } @else {
+                      <i class="fas fa-sort text-green-300"></i>
+                    }
+                  </span>
+                </th>
+                <th (click)="ordenarPor('criadoEm')">
+                  <span class="inline-flex items-center gap-1">
+                    Criado em
+                    @if (ordenacao().coluna === 'criadoEm' && ordenacao().direcao !== 'none') {
+                      <i class="fas" [class.fa-sort-up]="ordenacao().direcao === 'asc'" [class.fa-sort-down]="ordenacao().direcao === 'desc'"></i>
+                    } @else {
+                      <i class="fas fa-sort text-green-300"></i>
+                    }
+                  </span>
+                </th>
+                <th class="col-acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (usuario of listaPagina; track usuario.id; let i = $index) {
+                <tr class="as-data-table__row">
+                  <td>
+                    <span class="usuarios-table__nome">{{ usuario.nome }}</span>
+                  </td>
+                  <td>
+                    <div class="usuarios-table__contato">
+                      <span class="usuarios-table__email">{{ usuario.email }}</span>
+                      <span class="usuarios-table__login">Login: {{ usuario.login }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="usuarios-table__perfil">{{ usuario.perfil }}</span>
+                  </td>
+                  <td>
+                    <span class="usuarios-table__tag">{{ usuario.funcao }}</span>
+                  </td>
+                  <td>
+                    <span [class]="statusClasse(usuario.statusUsuario)">{{ usuario.statusUsuario }}</span>
+                  </td>
+                  <td>
+                    <span>{{ usuario.criadoEm | date:'dd/MM/yyyy' }}</span>
+                  </td>
+                  <td class="col-acoes">
+                    <as-menu-acoes-linha [acoes]="acoesLinha" (acionar)="acaoLinha($event, usuario)" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="as-data-table-card__footer">
+          <span class="usuarios-table-card__resumo">Mostrando {{ listaPagina.length }} de {{ totalRegistros() }} usuários</span>
+          <as-paginacao
+            [pagina]="pagina()"
+            [tamanhoPagina]="tamanhoPagina()"
+            [total]="totalRegistros()"
+            (mudouPagina)="mudarPagina($event)"
+          />
+        </div>
+      } @else {
+        <as-estado-vazio
+          titulo="Nenhum usuário encontrado"
+          descricao="Ajuste a busca ou os filtros para visualizar resultados."
+        >
+          <as-botao variante="secundario" iconeEsquerda="fas fa-user-plus" (click)="abrirNovoUsuario()">Cadastrar usuário</as-botao>
+        </as-estado-vazio>
+      }
+    </div>
+  </div>
+
+  @if (modalAberto()) {
+    <div class="usuarios-modal" role="dialog" aria-modal="true" aria-labelledby="usuarios-modal-titulo">
+      <div class="usuarios-modal__backdrop" (click)="fecharModal()"></div>
+  <div class="usuarios-modal__conteudo as-outline-surface as-outline-surface--dialog">
+        <header class="usuarios-modal__cabecalho">
+          <div>
+            <h2 id="usuarios-modal-titulo">
+              @switch (modalModo()) {
+                @case ('novo') { Novo usuário }
+                @case ('editar') { Editar usuário }
+                @case ('visualizar') { Detalhes do usuário }
+              }
+            </h2>
+            @if (usuarioAtual()) {
+              <p>ID {{ usuarioAtual()!.id }} • Criado em {{ usuarioAtual()!.criadoEm | date:'dd/MM/yyyy HH:mm' }}</p>
+            }
+          </div>
+          <button type="button" class="usuarios-modal__fechar" aria-label="Fechar" (click)="fecharModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </header>
+
+        <form class="usuarios-form" [formGroup]="usuarioForm" (ngSubmit)="salvarUsuario()">
+          <div class="usuarios-form__grid">
+            <label class="usuarios-form__campo">
+              <span>Nome completo</span>
+              <input formControlName="nome" type="text" placeholder="Ex: Maria Oliveira" />
+              @if (usuarioForm.controls.nome.touched && usuarioForm.controls.nome.invalid) {
+                <small>Use entre 3 e 120 caracteres.</small>
+              }
+            </label>
+
+            <label class="usuarios-form__campo">
+              <span>Login</span>
+              <input formControlName="login" type="text" placeholder="nome.sobrenome" />
+              @if (usuarioForm.controls.login.touched && usuarioForm.controls.login.invalid) {
+                <small>O login deve ter entre 5 e 30 caracteres.</small>
+              }
+            </label>
+
+            <label class="usuarios-form__campo">
+              <span>E-mail corporativo</span>
+              <input formControlName="email" type="email" placeholder="nome.sobrenome@allservice.com" />
+              @if (usuarioForm.controls.email.touched && usuarioForm.controls.email.invalid) {
+                <small>Use um e-mail válido.</small>
+              }
+            </label>
+
+            <label class="usuarios-form__campo">
+              <span>Perfil</span>
+              <select formControlName="perfil">
+                @for (perfil of perfisDisponiveis; track perfil) {
+                  <option [value]="perfil">{{ perfil }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="usuarios-form__campo">
+              <span>Função</span>
+              <input formControlName="funcao" type="text" placeholder="Ex: Analista Backoffice" />
+              @if (usuarioForm.controls.funcao.touched && usuarioForm.controls.funcao.invalid) {
+                <small>Informe uma função entre 3 e 60 caracteres.</small>
+              }
+            </label>
+
+            <label class="usuarios-form__campo">
+              <span>Status</span>
+              <select formControlName="statusUsuario">
+                @for (status of statusDisponiveis; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </label>
+
+            <label class="usuarios-form__campo">
+              <span>Senha provisória</span>
+              <input formControlName="senha" type="password" placeholder="Defina uma senha provisória" />
+              @if (usuarioForm.controls.senha.touched && usuarioForm.controls.senha.invalid) {
+                <small>Use entre 8 e 15 caracteres.</small>
+              }
+              @if (modalModo() !== 'novo') {
+                <small>Mantenha ******** para preservar a senha atual.</small>
+              }
+            </label>
+          </div>
+
+          @if (usuarioAtual()) {
+            <div class="usuarios-form__informacoes">
+              <div class="usuarios-form__info-item">
+                <i class="fas fa-user-shield"></i>
+                <span>Perfil atual {{ usuarioAtual()!.perfil }}</span>
+              </div>
+              <div class="usuarios-form__info-item">
+                <i class="fas fa-id-badge"></i>
+                <span>Login {{ usuarioAtual()!.login }}</span>
+              </div>
+            </div>
+          }
+
+          <footer class="usuarios-form__acoes">
+            @if (modalModo() === 'visualizar') {
+              <as-botao variante="secundario" iconeEsquerda="fas fa-edit" (click)="habilitarEdicao()">Editar</as-botao>
+            }
+            <as-botao variante="fantasma" iconeEsquerda="fas fa-times" (click)="fecharModal()">Cancelar</as-botao>
+            @if (modalModo() !== 'visualizar') {
+              <button class="usuarios-modal__submit" type="submit">
+                <i class="fas fa-save"></i>
+                <span>Salvar alterações</span>
+              </button>
+            }
+          </footer>
+        </form>
+      </div>
+    </div>
+  }
+</section>

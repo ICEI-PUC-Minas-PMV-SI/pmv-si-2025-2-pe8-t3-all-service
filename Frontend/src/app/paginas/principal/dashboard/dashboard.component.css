@@ -1,0 +1,6 @@
+/* estilos específicos do dashboard */
+
+/* Dark theme */
+:host-context([data-theme='dark']) .bg-white {
+  background: linear-gradient(140deg, rgba(18, 23, 29, 0.98), rgba(22, 27, 34, 0.98));
+}

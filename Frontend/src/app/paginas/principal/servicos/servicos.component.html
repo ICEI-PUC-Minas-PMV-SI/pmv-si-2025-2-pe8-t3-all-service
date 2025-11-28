@@ -1,0 +1,108 @@
+<section class="servicos">
+	<header class="topo">
+		<div class="busca">
+			<label>
+				<span>Buscar serviços</span>
+				<input
+					type="search"
+					placeholder="Cliente, NF, OS ou status"
+					[value]="filtro()"
+					(input)="atualizarFiltroEvento($event)"
+				/>
+			</label>
+		</div>
+		<as-botao [iconeEsquerda]="'ph ph-plus'" (click)="novo()">Novo serviço</as-botao>
+	</header>
+
+	@if (metricas().length) {
+		<section class="servicos-kpis as-kpi-grid">
+			@for (card of metricas(); track card.id) {
+				<as-cartao-indicador
+					[titulo]="card.titulo"
+					[valor]="card.valor"
+					[descricao]="card.descricao"
+					[icone]="card.icone"
+					[tendencia]="card.tendencia"
+					[accent]="card.accent"
+					[tipo]="card.tipo"
+				/>
+			}
+		</section>
+	}
+
+	@if (carregando()) {
+		<div class="servicos-loading" role="status">Carregando serviços...</div>
+	}
+
+	@if (!carregando() && erro()) {
+		<div class="servicos-erro" role="alert">{{ erro() }}</div>
+	}
+
+	@if (!carregando() && !erro() && filtrados().length === 0) {
+		<div class="vazio" role="status">
+			<p>Nenhum serviço encontrado para “{{ filtro() }}”.</p>
+			<small>Tente ajustar o termo de busca ou cadastre um novo serviço.</small>
+		</div>
+	} @else {
+		<div class="cards">
+			@for (servico of filtrados(); track servico.id) {
+				<article class="card" (click)="abrir(servico)">
+					<header class="card-cabecalho">
+						<div>
+							<h2>OS {{ servico.ordemServico ?? servico.id }}</h2>
+							<p>{{ servico.data | date:'dd/MM/yyyy' }} • {{ servico.empresa.nome }}</p>
+						</div>
+						<span class="status" [ngClass]="statusClasse(servico.status)">{{ formatarEnum(servico.status) }}</span>
+					</header>
+
+					<dl class="dados">
+						<div>
+							<dt>NF-e</dt>
+							<dd>{{ servico.notaFiscal ?? '—' }}</dd>
+						</div>
+						<div>
+							<dt>Certificado</dt>
+							<dd>{{ servico.numeroCertificado ?? '—' }}</dd>
+						</div>
+						<div>
+							<dt>Peças</dt>
+							<dd>{{ servico.quantidadePecas ?? '—' }}</dd>
+						</div>
+						<div>
+							<dt>Valor</dt>
+							<dd>{{ servico.valorTotal | currency:'BRL':'symbol-narrow' }}</dd>
+						</div>
+						<div>
+							<dt>Pagamento</dt>
+							<dd>{{ formatarEnum(servico.tipoPagamento) }}</dd>
+						</div>
+					</dl>
+
+					<footer class="card-footer">
+						<div class="resumo-dimensoes">
+							<span>Ø {{ servico.diametroPeca ?? '—' }} mm</span>
+							<span>L {{ servico.larguraPeca ?? '—' }} mm</span>
+							<span>RPM {{ servico.rpmPeca ?? '—' }}</span>
+						</div>
+						<div class="acoes">
+							<as-botao
+								[variante]="'fantasma'"
+								[iconeDireita]="'ph ph-eye'"
+								(click)="$event.stopPropagation(); visualizar(servico)"
+							>
+								Visualizar
+							</as-botao>
+							<as-botao
+								[variante]="'secundario'"
+								[iconeDireita]="'ph ph-pencil-simple-line'"
+								(click)="$event.stopPropagation(); editar(servico)"
+							>
+								Editar
+							</as-botao>
+						</div>
+					</footer>
+				</article>
+			}
+		</div>
+	}
+</section>
