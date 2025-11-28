@@ -250,7 +250,7 @@ Motor fiscal e pipeline de dados para classificação automática e explicável 
 
 Fonte: Elaborado pelo autor (2025).
 
--   **KPIs (com meta inicial)
+-   **KPIs (com meta inicial)**
 
 > Acurácia de classificação (≥95%); Cobertura de regras (≥98%); % intervenção humana (≤10%); Tempo de processamento (≤5 min/1.000 docs); Valor recuperado (mensal).
 
