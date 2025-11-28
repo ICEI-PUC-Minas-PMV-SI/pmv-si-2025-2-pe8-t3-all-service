@@ -13,7 +13,8 @@ A estrutura física possibilita manusear peças de grande porte (diâmetro, comp
 
 Justificativa da escolha: o setor é intensivo em dados técnicos e documentos fiscais; há oportunidades claras de integração entre operação e financeiro (OS→NF→fatura) e ganhos com governança de dados, automação e auditoria.
 
-2.  **ANÁLISE DE MERCADO**
+ANÁLISE DE MERCADO
+==================
 
 A All Service Industrial Ltda atua no segmento de serviços industriais especializados, com foco em balanceamento de equipamentos rotativos e manutenção industrial. Esse setor é vital para empresas de mineração, siderurgia, cimenteiras, papel e celulose, entre outras que operam com máquinas de grande porte. A atividade exige alta precisão técnica, equipamentos adequados e atendimento ágil.
 
@@ -133,7 +134,7 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 -   Melhorar a visibilidade financeira (faturamento por tributo, inadimplência).
 
 1. DECISÕES ESTRATÉGICAS DA EMPRESA
-    --------------------------------
+   -------------------------
 
     -   Escopo fiscal: ICMS, ISSQN
 
@@ -148,17 +149,17 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
     -   KPIs do produto: acurácia, cobertura de regras, % intervenção humana, tempo de processamento, valor recuperado em auditorias.
 
 2.  DECISÃO-CHAVE
-    -------------
+    ------------------------
 
-> Projetar/validar um motor fiscal explicável com ≥ 95% de acurácia e trilha Regra → Fonte → Versão.
+Projetar/validar um motor fiscal explicável com ≥ 95% de acurácia e trilha Regra → Fonte → Versão.
 
 3. KIT (KEY INTELLIGENCE TOPIC)
-----------------------------
+   ------------------------
 
-> Motor fiscal e pipeline de dados para classificação automática e explicável de faturamento por esferas tributárias brasileiras, com cobertura inicial dos clientes‑piloto.
+Motor fiscal e pipeline de dados para classificação automática e explicável de faturamento por esferas tributárias brasileiras, com cobertura inicial dos clientes‑piloto.
 
 4.  KIQ (KEY INTELLIGENCE QUESTIONS)
-    --------------------------------
+    ------------------------
 
     -   **D1**: Qual a volumetria de OS/NFs por cliente/município/serviço?
 
@@ -174,9 +175,8 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 
 **JUSTIFICATIVA:** essas KIQs cobrem as dimensões **operacional (dados/integração), regulatória (regras/compliance)** e **estratégica (mercado/KPIs)** necessárias para uma decisão segura e para o desenho correto do produto.
 
-5.  PRIORIZAÇÃO (MVP)
-    -----------------
-
+ ## PRIORIZAÇÃO (MVP)
+ 
     -   MUST: atributos mínimos do motor (item LC116/NBS, municípios tomador/prestador, valor de serviços, regime, presença de materiais, indicadores de retenção).
 
     -   SHOULD: reconciliação, CFOP/NCM, versionamento de regras/evidências
@@ -185,8 +185,7 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 
     -   WON’T: integrações não essenciais ao piloto e preditivos avançados 
 
-6.  MAPEAMENTO DE DADOS E NECESSIDADES DE INFORMAÇÃO 
-    ------------------------------------------------
+## MAPEAMENTO DE DADOS E NECESSIDADES DE INFORMAÇÃO 
 
     -   OS/Serviço: cliente, descrição, Ø/LT/L/P, RPM, G.Q., valores, observações, estado e timestamps.
 
@@ -196,8 +195,7 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 
     -   Integrações/Auditoria: conectores, logs, telemetria, histórico de transições.
 
-7.  MAPA KIQ → INFORMAÇÃO → DADOS → FONTES → PRIORIDADE
-    ---------------------------------------------------
+## MAPA KIQ → INFORMAÇÃO → DADOS → FONTES → PRIORIDADE
 
 | **KIQ** | **Informação necessária**                                   | **Dados/atributos**                                    | **Fontes**                          | **Pri.** |
 |---------|-------------------------------------------------------------|--------------------------------------------------------|-------------------------------------|----------|
@@ -208,7 +206,7 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 | F1      | Faturamento por tributo e aging                             | tributo, valor, vencimento, status                     | NF/Faturas                          | Alta     |
 | O1      | Lead time por estado; retrabalho                            | timestamps de transição, reaberturas                   | Logs de estados                     | Alta     |
 
-###  FONTES DE DADOS
+## FONTES DE DADOS
 
 -   Planilha de Faturamento (Excel) — Formatação variável; mensal/contínua; responsável: Financeiro. Ação: saneamento, padronização, ETL.
 
@@ -220,7 +218,7 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 
 -   Logs/auditoria do motor — interno (novo). Ação: especificar schema e retenção.
 
-###  DISPONIBILIDADE E CONFIABILIDADE
+##  DISPONIBILIDADE E CONFIABILIDADE
 
 -   Internas (planilhas/OS): alta disponibilidade; confiabilidade variável → requer validação, dedup e reconciliação.
 
@@ -228,11 +226,9 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 
 -   Tabelas legais: alta disponibilidade e confiabilidade; exigir versionamento e data de validade.
 
-8.  ESPECIFICAÇÃO DE REQUISITOS INFORMACIONAIS (LIGANDO KIQ → KPIS → FUNCIONALIDADES)
-    ---------------------------------------------------------------------------------
+## ESPECIFICAÇÃO DE REQUISITOS INFORMACIONAIS (LIGANDO KIQ → KPIS → FUNCIONALIDADES)
 
-    -   ### INFORMAÇÕES QUE O SISTEMA DEVE COLETAR
-
+-   ### INFORMAÇÕES QUE O SISTEMA DEVE COLETAR
 | **CAMPO NO MODAL** | **ATRIBUTO**                                    | **TIPO/UNIDADE** |
 |--------------------|-------------------------------------------------|------------------|
 | Data               | dataAbertura                                    | data             |
@@ -254,7 +250,7 @@ IDENTIFICAÇÃO DAS NECESSIDADES DE IC (KIT E KIQs)
 
 Fonte: Elaborado pelo autor (2025).
 
--   ### KPIs (com meta inicial)
+-  **KPIs (com meta inicial)
 
 > Acurácia de classificação (≥95%); Cobertura de regras (≥98%); % intervenção humana (≤10%); Tempo de processamento (≤5 min/1.000 docs); Valor recuperado (mensal).
 
@@ -392,8 +388,7 @@ Fonte: Elaborado pelo autor (2025).
 </tbody>
 </table>
 
-9.  COMPLIANCE DE TI E SEGURANÇA DA INFORMAÇÃO
-    ------------------------------------------
+## COMPLIANCE DE TI E SEGURANÇA DA INFORMAÇÃO
 
     -   NORMAS E REGULATÓRIOS APLICÁVEIS
 
